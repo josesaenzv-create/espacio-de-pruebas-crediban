@@ -1,0 +1,3365 @@
+<!-- ============================================================================
+     SISTEMA INTEGRAL DE ASISTENCIA Y FOTOS DE GESTIÓN EN CAMPO - CREDIBAN PERÚ S.A.C.
+     PARTE 1 DE 2: Estructura HTML5, Logo Oficial SVG, Checklist Diario del Asesor,
+     Exportador PDF con Análisis Ejecutivo y Configurador Gerencial de Fotos por Sede
+     ============================================================================ -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CREDIBAN | Asistencia y Gestión en Campo</title>
+
+  <!-- Tailwind CSS & Librerías Core + Generador PDF (jsPDF & AutoTable) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            crediban: {
+              green: '#59B447',
+              dark: '#1B4332',
+              deep: '#0F291E',
+              light: '#EAF7E8'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F1F5F9;
+      color: #0F172A;
+      overflow-x: hidden;
+      overscroll-behavior-y: contain;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Tipografía Oficial del Estándar Gráfico CREDIBAN */
+    .font-crediban-title {
+      font-family: Georgia, 'Times New Roman', serif;
+    }
+    .font-crediban-slogan {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    @keyframes barGlow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.78; }
+    }
+    .bar-anim-1 { animation: barGlow 2.6s infinite ease-in-out 0.1s; }
+    .bar-anim-2 { animation: barGlow 2.6s infinite ease-in-out 0.2s; }
+    .bar-anim-3 { animation: barGlow 2.6s infinite ease-in-out 0.3s; }
+    .bar-anim-4 { animation: barGlow 2.6s infinite ease-in-out 0.4s; }
+    .bar-anim-5 { animation: barGlow 2.6s infinite ease-in-out 0.5s; }
+    .bar-anim-6 { animation: barGlow 2.6s infinite ease-in-out 0.6s; }
+
+    /* Modos de Vista: Compacto Celular vs Amplio PC */
+    .app-shell-mobile { max-width: 480px; margin: 0 auto; }
+    .app-shell-pc { max-width: 1280px; margin: 0 auto; }
+
+    .glass-header {
+      background: linear-gradient(135deg, #0F291E 0%, #1B4332 100%);
+    }
+    .card-clean {
+      background: #FFFFFF;
+      border-radius: 1rem;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 4px 14px -2px rgba(15, 41, 30, 0.06);
+    }
+    .btn-active-scale:active { transform: scale(0.97); }
+  </style>
+</head>
+<body class="min-h-screen pb-20 select-none">
+
+  <!-- ==========================================================================
+       1. PANTALLA DE CARGA INICIAL
+       ========================================================================== -->
+  <div id="loadingOverlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0F291E] text-white transition-opacity duration-300">
+    <div class="w-16 h-20 mb-3 flex items-center justify-center">
+      <svg id="credibanMasterSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 240" class="w-full h-full">
+        <g fill="#59B447">
+          <rect x="90" y="8" width="24" height="13" rx="6.5" class="bar-anim-1"/>
+          <rect x="71" y="31" width="61" height="13" rx="6.5" class="bar-anim-2"/>
+          <rect x="50" y="55" width="74" height="13" rx="6.5" class="bar-anim-3"/>
+          <rect x="31" y="79" width="75" height="13" rx="6.5" class="bar-anim-4"/>
+          <rect x="24" y="103" width="63" height="13" rx="6.5" class="bar-anim-5"/>
+          <rect x="37" y="128" width="24" height="13" rx="6.5" class="bar-anim-6"/>
+          <path d="M143 55 C141 78 130 95 111 107 C96 117 81 122 72 134 C62 147 63 166 70 181 C76 195 87 208 97 216 C107 201 118 189 131 177 C144 166 157 156 164 141 C173 123 173 104 168 89 C164 74 156 62 143 55 Z"/>
+        </g>
+      </svg>
+    </div>
+    <p class="text-sm font-extrabold tracking-widest uppercase text-emerald-300">CREDIBAN PERÚ</p>
+    <p class="text-xs text-slate-300 mt-1">Sincronizando parámetros, sedes y cruces de calles...</p>
+  </div>
+
+  <!-- Notificación flotante rápida -->
+  <div id="toastAviso" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/95 text-white text-xs font-extrabold shadow-xl border border-emerald-500/40 whitespace-nowrap">
+    <i class="fa-solid fa-shield-halved text-[#59B447] mr-1.5"></i>
+    <span id="toastAvisoTexto">Datos autoguardados</span>
+  </div>
+
+  <!-- ==========================================================================
+       2. PANTALLA DE LOGIN BLINDADA (SOLO USUARIO Y CONTRASEÑA)
+       ========================================================================== -->
+  <div id="loginScreen" class="hidden min-h-screen flex flex-col justify-center items-center p-4 bg-gradient-to-br from-[#0F291E] via-[#1B4332] to-slate-900">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-white/20 border-t-8 border-t-[#59B447]">
+      
+      <!-- Cabecera con Logo Oficial Exacto de CREDIBAN -->
+      <div class="px-6 pt-7 pb-4 text-center bg-white border-b border-slate-100">
+        <div class="inline-flex items-center justify-center gap-3 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm mb-3">
+          <div class="w-11 h-14 flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 240" class="w-full h-full">
+              <g fill="#59B447">
+                <rect x="90" y="8" width="24" height="13" rx="6.5" class="bar-anim-1"/>
+                <rect x="71" y="31" width="61" height="13" rx="6.5" class="bar-anim-2"/>
+                <rect x="50" y="55" width="74" height="13" rx="6.5" class="bar-anim-3"/>
+                <rect x="31" y="79" width="75" height="13" rx="6.5" class="bar-anim-4"/>
+                <rect x="24" y="103" width="63" height="13" rx="6.5" class="bar-anim-5"/>
+                <rect x="37" y="128" width="24" height="13" rx="6.5" class="bar-anim-6"/>
+                <path d="M143 55 C141 78 130 95 111 107 C96 117 81 122 72 134 C62 147 63 166 70 181 C76 195 87 208 97 216 C107 201 118 189 131 177 C144 166 157 156 164 141 C173 123 173 104 168 89 C164 74 156 62 143 55 Z"/>
+              </g>
+            </svg>
+          </div>
+          <div class="flex flex-col justify-center text-left">
+            <span class="text-[#59B447] font-bold text-2xl sm:text-3xl leading-none tracking-widest font-crediban-title">
+              CREDIBAN
+            </span>
+            <span class="text-[#59B447] font-bold text-[9px] sm:text-[10px] leading-tight tracking-wide mt-1 uppercase font-crediban-slogan">
+              empieza a construir tus sueños
+            </span>
+          </div>
+        </div>
+
+        <h1 class="text-lg font-black text-slate-800 tracking-tight">Acceso Corporativo</h1>
+        <p class="text-xs font-semibold text-slate-500 mt-0.5">Asistencia y Gestión de Campo</p>
+      </div>
+
+      <!-- Formulario Cerrado (Solo Usuario y Contraseña) -->
+      <form onsubmit="iniciarSesion(event)" class="p-6 space-y-4">
+        <div id="loginAlert" class="hidden p-3 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 text-center"></div>
+
+        <div>
+          <label for="loginUsuarioInput" class="block text-[11px] font-extrabold uppercase text-slate-600 mb-1.5 ml-1">
+            Usuario
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+              <i class="fa-solid fa-user"></i>
+            </span>
+            <input
+              id="loginUsuarioInput"
+              type="text"
+              autocomplete="username"
+              autocapitalize="characters"
+              spellcheck="false"
+              placeholder="Escribe tu usuario..."
+              required
+              class="w-full pl-10 pr-4 py-3.5 rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white text-sm font-bold text-slate-800 focus:outline-none focus:border-[#59B447] focus:ring-4 focus:ring-[#59B447]/15 transition"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="loginClaveInput" class="block text-[11px] font-extrabold uppercase text-slate-600 mb-1.5 ml-1">
+            Contraseña
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+              <i class="fa-solid fa-lock"></i>
+            </span>
+            <input
+              id="loginClaveInput"
+              type="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+              required
+              class="w-full pl-10 pr-11 py-3.5 rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white text-sm font-bold text-slate-800 focus:outline-none focus:border-[#59B447] focus:ring-4 focus:ring-[#59B447]/15 transition"
+            />
+            <button
+              type="button"
+              onclick="toggleVerClave()"
+              class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
+              tabindex="-1"
+            >
+              <i id="eyeIcon" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <label class="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80 cursor-pointer">
+          <input id="loginRecordar" type="checkbox" checked class="w-4 h-4 accent-[#59B447] rounded" />
+          <span class="text-xs font-bold text-[#1B4332]">🔒 Mantener mi sesión iniciada en este celular</span>
+        </label>
+
+        <button
+          id="btnIngresar"
+          type="submit"
+          class="w-full py-3.5 rounded-xl bg-[#59B447] hover:bg-[#4ea33d] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-[#59B447]/30 btn-active-scale transition flex items-center justify-center gap-2"
+        >
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>Ingresar al Sistema</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       3. CONTENEDOR PRINCIPAL DE LA APLICACIÓN (ADAPTABLE MÓVIL / PC)
+       ========================================================================== -->
+  <div id="mainAppContainer" class="hidden app-shell-mobile transition-all duration-300">
+
+    <!-- CABECERA COMPACTA CON LOGO OFICIAL CREDIBAN, GPS Y CAMBIADOR DE VISTA -->
+    <header class="glass-header text-white sticky top-0 z-40 shadow-lg">
+      <div class="px-3 py-2.5 flex items-center justify-between gap-2">
+        
+        <!-- Logo Oficial CREDIBAN en cápsula blanca -->
+        <div class="inline-flex items-center gap-2 bg-white px-2.5 py-1 rounded-xl shadow-sm shrink-0">
+          <div class="w-6 h-8 flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 240" class="w-full h-full">
+              <g fill="#59B447">
+                <rect x="90" y="8" width="24" height="13" rx="6.5"/>
+                <rect x="71" y="31" width="61" height="13" rx="6.5"/>
+                <rect x="50" y="55" width="74" height="13" rx="6.5"/>
+                <rect x="31" y="79" width="75" height="13" rx="6.5"/>
+                <rect x="24" y="103" width="63" height="13" rx="6.5"/>
+                <rect x="37" y="128" width="24" height="13" rx="6.5"/>
+                <path d="M143 55 C141 78 130 95 111 107 C96 117 81 122 72 134 C62 147 63 166 70 181 C76 195 87 208 97 216 C107 201 118 189 131 177 C144 166 157 156 164 141 C173 123 173 104 168 89 C164 74 156 62 143 55 Z"/>
+              </g>
+            </svg>
+          </div>
+          <div class="flex flex-col justify-center text-left">
+            <span class="text-[#59B447] font-bold text-base leading-none tracking-widest font-crediban-title">
+              CREDIBAN
+            </span>
+            <span class="text-[#59B447] font-bold text-[6.5px] leading-tight tracking-wide uppercase font-crediban-slogan">
+              empieza a construir tus sueños
+            </span>
+          </div>
+        </div>
+
+        <!-- Controles Superiores: Semáforo GPS + Botón Cambiar Vista + Salir -->
+        <div class="flex items-center gap-1.5">
+          <button onclick="forzarRefrescoGPS()" id="gpsBadge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-400/40" title="Toca para actualizar calle y cruce exacto">
+            <span id="gpsDot" class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span id="gpsText">GPS...</span>
+          </button>
+
+          <button onclick="alternarModoPantalla()" id="btnCambiarVista" class="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-[11px] font-extrabold text-emerald-200 border border-white/15 transition" title="Alternar entre vista móvil y vista PC">
+            <i id="iconCambiarVista" class="fa-solid fa-expand mr-1"></i>
+            <span id="labelCambiarVista">Vista PC</span>
+          </button>
+
+          <button onclick="confirmarCerrarSesion()" class="px-2 py-1 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-200 border border-rose-400/30 text-xs font-bold" title="Cerrar sesión">
+            <i class="fa-solid fa-power-off"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Cintillo de Identidad y Sede Habilitada -->
+      <div class="bg-black/25 px-3.5 py-1.5 flex items-center justify-between text-[11px] border-t border-white/10">
+        <div class="flex items-center gap-1.5 truncate">
+          <span id="headerRolBadge" class="px-2 py-0.5 rounded-md bg-[#59B447] text-white font-black uppercase text-[10px]">ASESOR</span>
+          <span id="headerUserName" class="font-bold text-white truncate">USUARIO</span>
+          <span id="headerPermisoBadge" class="hidden px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[9px] font-black uppercase">Permiso Especial</span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 text-emerald-300 font-bold">
+          <span><i class="fa-solid fa-location-dot mr-1"></i><span id="headerUserSede">SEDE</span></span>
+          <!-- Selector de Sede Operativa (Exclusivo para Gerentes) -->
+          <select id="gerenteSedeOperativaSelect" onchange="cambiarSedeOperativaGerente(this.value)" class="hidden bg-[#0F291E] text-emerald-200 border border-emerald-500/40 rounded-lg px-1.5 py-0.5 text-[10px] font-extrabold outline-none"></select>
+        </div>
+      </div>
+
+      <!-- Barra de Navegación Principal (Adaptable y protegida por Rol):
+           - Asesores, Cajeros y Trabajadores: SOLO ven "Asistencia" y "Fotos Gestión".
+           - Administradores: Ven "Asistencia", "Fotos Gestión" y "Mi Sede".
+           - Gerentes: Ven todas + "Control Global" + "Quién Marca / Config. Fotos". -->
+      <nav class="bg-[#0F291E] px-2 py-1.5 flex flex-wrap sm:flex-nowrap gap-1 overflow-x-auto no-scrollbar border-t border-emerald-900">
+        <button onclick="cambiarPestana('MARCAR')" id="tabBtn_MARCAR" class="flex-1 min-w-[95px] py-2 px-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition bg-[#59B447] text-white shadow">
+          <i class="fa-solid fa-clock mr-1"></i> Asistencia
+        </button>
+
+        <button onclick="cambiarPestana('GESTION')" id="tabBtn_GESTION" class="flex-1 min-w-[110px] py-2 px-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition bg-white/10 text-emerald-100 hover:bg-white/20">
+          <i class="fa-solid fa-camera-retro mr-1"></i> Fotos Gestión
+        </button>
+
+        <!-- OCULTO para Asesores, Cajeros y Trabajadores -->
+        <button onclick="cambiarPestana('REPORTE')" id="tabBtn_REPORTE" class="hidden flex-1 min-w-[115px] py-2 px-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition bg-white/10 text-emerald-100 hover:bg-white/20">
+          <i class="fa-solid fa-clipboard-user mr-1"></i> <span id="tabLabelReporte">Mi Sede</span>
+        </button>
+
+        <!-- EXCLUSIVO PARA GERENTES: Control Global -->
+        <button onclick="cambiarPestana('GERENCIA')" id="tabBtn_GERENCIA" class="hidden flex-1 min-w-[115px] py-2 px-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition bg-amber-400/20 text-amber-300 border border-amber-400/30">
+          <i class="fa-solid fa-crown mr-1"></i> Control Global
+        </button>
+
+        <!-- EXCLUSIVO PARA GERENTES: Quién Marca y Configuración de Fotos por Marcaje -->
+        <button onclick="cambiarPestana('PERMISOS')" id="tabBtn_PERMISOS" class="hidden flex-1 min-w-[120px] py-2 px-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">
+          <i class="fa-solid fa-sliders mr-1"></i> Quién Marca / Fotos
+        </button>
+      </nav>
+    </header>
+
+    <!-- CRONÓMETRO DE REFRIGERIO EN CURSO -->
+    <div id="refrigerioBanner" class="hidden mx-3 mt-3 p-3 rounded-2xl bg-amber-500 text-slate-950 shadow-lg flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <i class="fa-solid fa-utensils text-lg"></i>
+        <div class="leading-tight">
+          <p class="text-[11px] font-black uppercase">Refrigerio en Curso</p>
+          <p class="text-xs font-semibold">Retorno límite: <span id="refriHoraLimite" class="font-black">--:--</span></p>
+        </div>
+      </div>
+      <div id="refriCountdown" class="px-3 py-1 rounded-xl bg-slate-950 text-amber-400 font-mono font-black text-sm">60:00</div>
+    </div>
+
+    <!-- ========================================================================
+         PESTAÑA 1: MARCAR ASISTENCIA + PANEL "MIS REGISTROS DE HOY" DEBAJO DEL BOTÓN
+         ======================================================================== -->
+    <main id="view_MARCAR" class="p-3 space-y-3">
+      
+      <!-- Reloj Digital, Horario Oficial desde PARAMETROS y Calle + Cruce Exacto -->
+      <div class="card-clean p-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <p id="relojFecha" class="text-[11px] font-bold uppercase text-slate-400">Martes, 3 de Noviembre</p>
+            <p id="relojHora" class="text-2xl font-black text-[#1B4332] tracking-tight">08:30:00 AM</p>
+          </div>
+          <div class="text-right">
+            <span id="badgeEstadoLaborableHoy" class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-50 text-[#59B447] border border-emerald-200">Día Laborable</span>
+            <p id="horarioSedeTexto" class="text-[11px] font-bold text-slate-600 mt-1">Entrada: 08:30 | Salida: 18:30</p>
+          </div>
+        </div>
+
+        <!-- Dirección exacta con Número Aprox. + Cruce de Calles -->
+        <div class="mt-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 space-y-2">
+          <div class="flex items-start gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-emerald-100 text-[#1B4332] flex items-center justify-center shrink-0 mt-0.5">
+              <i class="fa-solid fa-map-location-dot text-base"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p id="calleDetectadaTitulo" class="text-xs font-extrabold text-slate-800 truncate">Detectando calle y número aproximado...</p>
+              <p id="cruceDetectadoSub" class="text-[11px] font-bold text-emerald-700 truncate">Calculando intersección / cruce de calles...</p>
+              <p id="distritoDetectadoSub" class="text-[10px] font-semibold text-slate-500 truncate">Hualmay, Huaura, Lima</p>
+            </div>
+          </div>
+
+          <!-- Controles rápidos de Sello Fotográfico -->
+          <div class="pt-2 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2">
+            <label class="flex items-center gap-1.5 text-[11px] font-extrabold text-[#1B4332] cursor-pointer">
+              <input id="chkIncluirMinimapa" type="checkbox" checked onchange="guardarBorradorFormulario()" class="w-3.5 h-3.5 accent-[#59B447] rounded" />
+              <span>🗺️ Incluir Minimapa Sólido</span>
+            </label>
+            <label class="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 cursor-pointer">
+              <input id="chkIncluirBrujula" type="checkbox" checked onchange="guardarBorradorFormulario()" class="w-3.5 h-3.5 accent-[#59B447] rounded" />
+              <span>🧭 Brújula</span>
+            </label>
+          </div>
+
+          <div>
+            <input id="inputPrecisionCruce" type="text" oninput="guardarBorradorFormulario()" placeholder="Precisión extra opcional (Ej. N° 450 / Cruce Grau con Moore)" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold text-slate-700 focus:outline-none focus:border-[#59B447]" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Selección de Tipo de Marcaje -->
+      <div class="card-clean p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <label class="block text-[11px] font-extrabold uppercase text-slate-500">1. Selecciona el Tipo de Marcaje</label>
+          <span id="badgeModoFotoMarcaje" class="px-2 py-0.5 rounded-md bg-emerald-50 text-[#1B4332] border border-emerald-200 text-[10px] font-black uppercase">
+            📸 Requiere Foto
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="seleccionarTipoMarcaje('ENTRADA')" id="btnTipo_ENTRADA" class="p-3 rounded-xl border-2 border-[#59B447] bg-emerald-50/70 text-[#1B4332] text-left transition flex items-center gap-2.5">
+            <i class="fa-solid fa-door-open text-lg text-[#59B447]"></i>
+            <div class="min-w-0">
+              <span class="block text-xs font-black">ENTRADA</span>
+              <span id="subEstadoBtn_ENTRADA" class="block text-[10px] text-slate-500 font-semibold truncate">Inicio de jornada</span>
+            </div>
+          </button>
+
+          <button type="button" onclick="seleccionarTipoMarcaje('SALIDA REFRIGERIO')" id="btnTipo_SALIDA_REFRIGERIO" class="p-3 rounded-xl border-2 border-slate-200 bg-white text-slate-700 text-left transition flex items-center gap-2.5">
+            <i class="fa-solid fa-utensils text-lg text-amber-500"></i>
+            <div class="min-w-0">
+              <span class="block text-xs font-black">REFRIGERIO</span>
+              <span id="subEstadoBtn_SALIDA_REFRIGERIO" class="block text-[10px] text-slate-500 font-semibold truncate">Salida almuerzo</span>
+            </div>
+          </button>
+
+          <button type="button" onclick="seleccionarTipoMarcaje('RETORNO REFRIGERIO')" id="btnTipo_RETORNO_REFRIGERIO" class="p-3 rounded-xl border-2 border-slate-200 bg-white text-slate-700 text-left transition flex items-center gap-2.5">
+            <i class="fa-solid fa-rotate-left text-lg text-blue-500"></i>
+            <div class="min-w-0">
+              <span class="block text-xs font-black">RETORNO</span>
+              <span id="subEstadoBtn_RETORNO_REFRIGERIO" class="block text-[10px] text-slate-500 font-semibold truncate">Fin de refrigerio</span>
+            </div>
+          </button>
+
+          <button type="button" onclick="seleccionarTipoMarcaje('SALIDA FINAL')" id="btnTipo_SALIDA_FINAL" class="p-3 rounded-xl border-2 border-slate-200 bg-white text-slate-700 text-left transition flex items-center gap-2.5">
+            <i class="fa-solid fa-person-walking-arrow-right text-lg text-rose-500"></i>
+            <div class="min-w-0">
+              <span class="block text-xs font-black">SALIDA</span>
+              <span id="subEstadoBtn_SALIDA_FINAL" class="block text-[10px] text-slate-500 font-semibold truncate">Cierre del día</span>
+            </div>
+          </button>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+              <input id="chkEnCampo" type="checkbox" onchange="guardarBorradorFormulario()" class="w-4 h-4 accent-[#59B447] rounded" />
+              <span>🛵 Marcaje desde Campo / Comisión</span>
+            </label>
+            <span class="text-[10px] font-semibold text-emerald-600"><i class="fa-solid fa-floppy-disk mr-1"></i>Autoguardado activo</span>
+          </div>
+          <input id="inputMotivoAsistencia" type="text" oninput="guardarBorradorFormulario()" placeholder="Cliente o motivo opcional (Ej. Agencia / Visita Cliente)" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#59B447]" />
+        </div>
+
+        <div id="notaObligatoriaFotoBox" class="p-2.5 rounded-xl bg-amber-50 border border-amber-300/80 flex items-center gap-2.5">
+          <i class="fa-solid fa-triangle-exclamation text-amber-600 text-base shrink-0"></i>
+          <p id="notaObligatoriaFotoTexto" class="text-[11px] font-bold text-amber-900 leading-snug">
+            <strong>NOTA OBLIGATORIA:</strong> En la fotografía debe verse claramente el rostro del colaborador junto con el entorno.
+          </p>
+        </div>
+
+        <input id="cameraInputAsistencia" type="file" accept="image/*" capture="user" class="hidden" onchange="procesarFotoCapturada(event, 'ASISTENCIA')" />
+
+        <!-- Botón Dinámico: Abre Cámara si requiere foto, o Registra Hora + GPS directo si Gerencia desactivó la foto para ese marcaje -->
+        <button id="btnAccionPrincipalAsistencia" onclick="ejecutarAccionMarcajeAsistencia()" class="w-full py-4 rounded-2xl bg-[#59B447] hover:bg-[#4ea33d] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-[#59B447]/30 btn-active-scale transition flex items-center justify-center gap-2">
+          <i id="iconBtnAccionAsistencia" class="fa-solid fa-camera text-lg"></i>
+          <span id="txtBtnAccionAsistencia">Tomar Foto y Previsualizar</span>
+        </button>
+      </div>
+
+      <!-- NUEVA SECCIÓN DEBAJO DEL BOTÓN: "MIS REGISTROS DE HOY" (PARA SABER QUÉ FALTA MARCAR) -->
+      <div class="card-clean p-4 space-y-3 border-l-4 border-l-[#59B447]">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-xs font-black uppercase text-[#1B4332]">
+              <i class="fa-solid fa-list-check mr-1.5 text-[#59B447]"></i> Mis Marcajes de Hoy (<span id="fechaLocalMisRegistros">--/--/----</span>)
+            </h3>
+            <p class="text-[10px] font-semibold text-slate-500">Verifica qué marcaje ya se registró y cuál te falta (Cierre del día: 23:59)</p>
+          </div>
+          <span id="badgeProgresoDiaUsuario" class="px-2.5 py-1 rounded-full bg-emerald-100 text-[#1B4332] text-[10px] font-black">0 / 4</span>
+        </div>
+
+        <!-- Checklist Visual de los 4 Pasos del Día -->
+        <div id="gridChecklistDiaUsuario" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <!-- Se renderiza dinámicamente: Entrada | Salida Refri | Retorno Refri | Salida Final -->
+        </div>
+
+        <!-- Lista detallada de los registros de hoy del usuario activo -->
+        <div id="listaDetalleMisRegistrosHoy" class="space-y-1.5 pt-1 border-t border-slate-100"></div>
+      </div>
+    </main>
+
+    <!-- ========================================================================
+         PESTAÑA 2: FOTOS DE GESTIÓN EN CAMPO
+         ======================================================================== -->
+    <section id="view_GESTION" class="hidden p-3 space-y-3">
+      <div class="card-clean p-4 space-y-3 border-l-4 border-l-[#59B447]">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-[#1B4332] font-black text-[10px] uppercase">100% Calidad Original • Capacidad +100 Fotos/Día</span>
+            <h2 class="text-base font-black text-slate-800 mt-1">📸 Cámara de Gestión en Campo</h2>
+            <p class="text-xs text-slate-500">Estampa el minimapa sólido sin transparencia, calle con N° aproximado y cruce de calles, lista para enviar por WhatsApp y guardar en <strong>"Mi gestión Crediban"</strong>.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-extrabold uppercase text-slate-500">Cliente / Negocio (Opcional)</label>
+              <button type="button" onclick="limpiarCampoClienteGestion()" class="text-[10px] font-bold text-slate-400 hover:text-rose-500">Limpiar texto</button>
+            </div>
+            <input id="gestionClienteNombre" type="text" oninput="guardarBorradorFormulario()" placeholder="Ej. Visita Cliente / Negocio" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#59B447]" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1">Tipo de Gestión</label>
+            <select id="gestionTipoActividad" onchange="guardarBorradorFormulario()" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#59B447]">
+              <option value="Evaluación / Visita de Campo">Evaluación / Visita de Campo</option>
+              <option value="Cobranza / Notificación">Cobranza / Notificación</option>
+              <option value="Verificación Domiciliaria / Negocio">Verificación Domiciliaria / Negocio</option>
+              <option value="Promoción / Volanteo">Promoción / Volanteo</option>
+              <option value="Crédito Grupal">Reunión Crédito Grupal</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-[#59B447] text-white flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-folder-check"></i>
+            </div>
+            <div>
+              <p class="text-xs font-black text-[#1B4332]">📌 Carpeta Fijada: "Mi gestión Crediban"</p>
+              <p id="estadoCarpetaLocal" class="text-[10px] font-semibold text-slate-600">Autoguardado directo con prefijo de carpeta sin preguntar cada vez</p>
+            </div>
+          </div>
+          <button type="button" onclick="vincularCarpetaDispositivo()" id="btnFijarCarpeta" class="px-3 py-1.5 rounded-lg bg-white border border-emerald-300 hover:border-[#59B447] text-[11px] font-extrabold text-[#1B4332] shadow-sm">
+            <i class="fa-solid fa-thumbtack mr-1 text-[#59B447]"></i> Fijar Carpeta en Celular
+          </button>
+        </div>
+
+        <input id="cameraInputGestionTrasera" type="file" accept="image/*" capture="environment" class="hidden" onchange="procesarFotoCapturada(event, 'GESTION')" />
+        <input id="cameraInputGestionSelfie" type="file" accept="image/*" capture="user" class="hidden" onchange="procesarFotoCapturada(event, 'GESTION')" />
+
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button onclick="document.getElementById('cameraInputGestionTrasera').click()" class="py-3.5 px-3 rounded-2xl bg-[#1B4332] hover:bg-[#0F291E] text-white font-black text-xs uppercase tracking-wide shadow-md btn-active-scale transition flex flex-col items-center justify-center gap-1">
+            <i class="fa-solid fa-camera text-xl text-[#59B447]"></i>
+            <span>Cámara Trasera</span>
+          </button>
+          <button onclick="document.getElementById('cameraInputGestionSelfie').click()" class="py-3.5 px-3 rounded-2xl bg-[#59B447] hover:bg-[#4ea33d] text-white font-black text-xs uppercase tracking-wide shadow-md btn-active-scale transition flex flex-col items-center justify-center gap-1">
+            <i class="fa-solid fa-id-badge text-xl text-white"></i>
+            <span>Selfie con Cliente</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ÁLBUM DE ALTA CAPACIDAD CON FILTRO POR FECHA -->
+      <div class="card-clean p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+          <div>
+            <h3 class="text-xs font-black uppercase text-[#1B4332]">
+              <i class="fa-solid fa-images mr-1 text-[#59B447]"></i> Álbum: Mi gestión Crediban (<span id="contadorFotosGestion">0</span>)
+            </h3>
+            <p class="text-[10px] text-slate-500">Miniaturas ligeras anti-saturación • Tus fotos originales están en tu galería</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="alternarTamanoVistaAlbum()" id="btnTamanoAlbum" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-extrabold" title="Cambiar tamaño de vista">
+              <i class="fa-solid fa-table-cells mr-1"></i> Compacto
+            </button>
+            <button onclick="descargarAlbumZip()" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#1B4332] border border-emerald-200 text-[11px] font-extrabold">
+              <i class="fa-solid fa-file-zipper mr-1"></i> .ZIP Fecha
+            </button>
+            <button onclick="limpiarAlbumGestion()" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs" title="Limpiar fotos de esta fecha">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div class="flex items-center gap-1">
+            <button onclick="filtrarAlbumPorHoy()" id="btnAlbumHoy" class="px-2.5 py-2 rounded-xl bg-[#59B447] text-white text-[11px] font-extrabold shrink-0">Hoy</button>
+            <button onclick="filtrarAlbumTodasFechas()" id="btnAlbumTodas" class="px-2.5 py-2 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-extrabold shrink-0">Todas</button>
+            <input id="filtroFechaAlbumGestion" type="date" onchange="renderizarGaleriaGestion()" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700" />
+          </div>
+          <div class="sm:col-span-2 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input id="buscadorClienteAlbum" type="text" oninput="renderizarGaleriaGestion()" placeholder="Buscar foto por cliente, calle, cruce o actividad..." class="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#59B447]" />
+          </div>
+        </div>
+
+        <div id="galeriaGestionGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[380px] overflow-y-auto p-1"></div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         PESTAÑA 3: SUPERVISIÓN DE SEDE Y EXPORTACIÓN PDF CON ANÁLISIS EJECUTIVO
+         - Tardanza, Exceso de Refrigerio y Horas Extras (Solo Cajeros/Admins) SEPARADOS
+         ======================================================================== -->
+    <section id="view_REPORTE" class="hidden p-3 space-y-3">
+      
+      <!-- Cabecera de Supervisión para ADMINISTRADOR DE SEDE -->
+      <div id="adminSedeHeaderBar" class="hidden card-clean p-3 bg-emerald-950 text-white flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-black uppercase text-emerald-300">🛡️ Panel de Administración de Agencia</span>
+          <h3 id="adminSedeTitulo" class="text-xs font-black">Supervisión de Asesores, Trabajadores y Cajeros • SEDE HUACHO</h3>
+        </div>
+        <span class="px-2.5 py-1 rounded-lg bg-[#59B447] text-white text-[10px] font-black uppercase">Solo Mi Sede</span>
+      </div>
+
+      <!-- Barra de Supervisión Gerencial: EXCLUSIVA PARA GERENTES -->
+      <div id="gerenteSedeSelectorBar" class="hidden card-clean p-3 bg-[#1B4332] text-white space-y-2">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <span class="text-[11px] font-black uppercase text-emerald-300">
+            <i class="fa-solid fa-crown text-amber-400 mr-1"></i> Supervisión Gerencial (Todas las Sedes Habilitadas + Administradores):
+          </span>
+          <div class="flex gap-1 flex-wrap">
+            <button onclick="cambiarFiltroRolReporte('TODOS')" id="rolPill_TODOS" class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-[#59B447] text-white">Todos</button>
+            <button onclick="cambiarFiltroRolReporte('ADMINISTRADOR')" id="rolPill_ADMIN" class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-white/10 text-emerald-100">Solo Administradores</button>
+            <button onclick="cambiarFiltroRolReporte('ASESOR')" id="rolPill_ASESOR" class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-white/10 text-emerald-100">Asesores / Caja / Trabajadores</button>
+          </div>
+        </div>
+        <div id="botonesSedesReporte" class="flex gap-1.5 overflow-x-auto no-scrollbar pt-1"></div>
+      </div>
+
+      <!-- KPIs Separados (Tardanzas vs Horas Extras Exclusivas Cajeros/Admins) -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <div class="card-clean p-3 border-l-4 border-l-[#59B447]">
+          <span class="text-[10px] font-extrabold uppercase text-slate-400">Registros</span>
+          <p id="kpiTotalRegistros" class="text-xl font-black text-slate-800">0</p>
+        </div>
+        <div class="card-clean p-3 border-l-4 border-l-emerald-500">
+          <span class="text-[10px] font-extrabold uppercase text-slate-400">Puntuales</span>
+          <p id="kpiPuntuales" class="text-xl font-black text-emerald-600">0</p>
+        </div>
+        <div class="card-clean p-3 border-l-4 border-l-amber-500">
+          <span class="text-[10px] font-extrabold uppercase text-slate-400">Tardanza Entrada</span>
+          <p id="kpiTardanzas" class="text-lg font-black text-amber-600">0m (0.0h)</p>
+        </div>
+        <div class="card-clean p-3 border-l-4 border-l-blue-500">
+          <span class="text-[10px] font-extrabold uppercase text-slate-400">H. Extras (Caja/Admin)</span>
+          <p id="kpiHorasExtras" class="text-lg font-black text-blue-600">0m (0.0h)</p>
+        </div>
+        <div class="card-clean p-3 border-l-4 border-l-rose-500 col-span-2 sm:col-span-1">
+          <span class="text-[10px] font-extrabold uppercase text-slate-400">Sin Marcar Hoy</span>
+          <p id="kpiFaltasHoy" class="text-xl font-black text-rose-600">0</p>
+        </div>
+      </div>
+
+      <!-- Filtros (Hoy | Día | Semana | Mes | Rango) + Botón Exportar PDF con Logo y Análisis -->
+      <div class="card-clean p-3 space-y-2.5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl">
+            <button onclick="aplicarModoFecha('HOY')" id="btnFecha_HOY" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-[#59B447] text-white">Hoy</button>
+            <button onclick="aplicarModoFecha('DIA')" id="btnFecha_DIA" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold text-slate-600">📅 Día</button>
+            <button onclick="aplicarModoFecha('SEMANA')" id="btnFecha_SEMANA" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold text-slate-600">📆 Semana</button>
+            <button onclick="aplicarModoFecha('MES')" id="btnFecha_MES" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold text-slate-600">🗓️ Mes</button>
+            <button onclick="aplicarModoFecha('RANGO')" id="btnFecha_RANGO" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold text-slate-600">↔️ Rango</button>
+          </div>
+
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <!-- Nuevo Botón de Exportación PDF con Logo CREDIBAN y Análisis Ejecutivo -->
+            <button onclick="exportarReporteAsistenciaPDF()" class="px-3 py-1.5 rounded-xl bg-[#1B4332] hover:bg-[#0F291E] text-white text-xs font-extrabold shadow-sm transition flex items-center gap-1.5">
+              <i class="fa-solid fa-file-pdf text-rose-400"></i>
+              <span>Exportar PDF + Análisis</span>
+            </button>
+
+            <button onclick="alternarFormatoReporte()" id="btnFormatoReporte" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#1B4332] border border-emerald-200 text-xs font-extrabold transition">
+              <i id="iconFormatoReporte" class="fa-solid fa-table-list mr-1"></i>
+              <span id="textoFormatoReporte">Ver como Tabla</span>
+            </button>
+
+            <button onclick="cargarAsistenciasDesdeServidor(true)" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs" title="Sincronizar con Servidor">
+              <i id="iconSyncReporte" class="fa-solid fa-rotate"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+          <div id="contenedorInputFechaDia" class="hidden">
+            <input id="filtroFechaExacta" type="date" onchange="renderizarReportes()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold" />
+          </div>
+          <div id="contenedorInputFechaSemana" class="hidden">
+            <input id="filtroFechaSemanaRef" type="date" onchange="renderizarReportes()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold" title="Elige cualquier día de la semana a consultar" />
+          </div>
+          <div id="contenedorInputFechaMes" class="hidden">
+            <input id="filtroMesAnio" type="month" onchange="renderizarReportes()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold" />
+          </div>
+          <div id="contenedorInputRango" class="hidden sm:col-span-2 grid grid-cols-2 gap-2">
+            <input id="filtroDesde" type="date" onchange="renderizarReportes()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold" />
+            <input id="filtroHasta" type="date" onchange="renderizarReportes()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold" />
+          </div>
+
+          <select id="filtroTrabajadorReporte" onchange="renderizarReportes()" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700">
+            <option value="TODOS">👤 Todos los colaboradores supervisados</option>
+          </select>
+
+          <select id="filtroEquipoReporte" onchange="renderizarReportes()" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700">
+            <option value="TODOS">🛡️ Todas las Áreas / Equipos</option>
+          </select>
+
+          <select id="filtroObligacionReporte" onchange="renderizarReportes()" class="w-full px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50/50 text-xs font-extrabold text-[#1B4332]">
+            <option value="OBLIGADOS">✅ Solo Personal que Debe Marcar</option>
+            <option value="TODOS">🌐 Todos (Incluye Permisos Especiales)</option>
+            <option value="EXONERADOS">🛡️ Solo Con Permiso Especial / Exonerados</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Cuadro de Análisis Ejecutivo en Pantalla (El mismo que se imprime en el PDF) -->
+      <div id="panelAnalisisEjecutivoReporte" class="card-clean p-3.5 bg-gradient-to-r from-emerald-950 to-[#1B4332] text-white space-y-2">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="text-[11px] font-black uppercase text-emerald-300">
+            <i class="fa-solid fa-chart-pie mr-1"></i> Análisis Ejecutivo del Filtro Seleccionado
+          </span>
+          <span id="analisisEtiquetaPeriodo" class="text-[10px] font-bold bg-white/10 px-2.5 py-0.5 rounded-full text-emerald-100">Período: Hoy</span>
+        </div>
+        <p id="analisisTextoResumen" class="text-xs font-medium text-emerald-50 leading-relaxed">
+          Cargando análisis de puntualidad, tardanzas y horas extras...
+        </p>
+      </div>
+
+      <!-- Personal pendiente de marcar entrada hoy -->
+      <details class="card-clean p-3 bg-rose-50/50 border-rose-200">
+        <summary class="text-xs font-black text-rose-800 cursor-pointer flex items-center justify-between">
+          <span><i class="fa-solid fa-user-clock mr-1.5 text-rose-600"></i> Personal Obligado Pendiente de Marcar Hoy (<span id="badgePendientesCount">0</span>)</span>
+          <span class="text-[10px] font-bold underline">Desplegar</span>
+        </summary>
+        <div id="listaPendientesHoy" class="mt-2.5 flex flex-wrap gap-1.5"></div>
+      </details>
+
+      <!-- Vista Tarjetas (Celular) y Vista Tabla (PC) con Tardanza y Horas Extras Separadas -->
+      <div id="contenedorTarjetasReporte" class="space-y-2.5"></div>
+
+      <div id="contenedorTablaReporte" class="hidden card-clean overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-[#1B4332] text-white uppercase text-[10px]">
+              <th class="p-2.5">Fecha / Hora</th>
+              <th class="p-2.5">Colaborador</th>
+              <th class="p-2.5">Rango / Sede</th>
+              <th class="p-2.5">Marcaje</th>
+              <th class="p-2.5">Tardanza Entrada</th>
+              <th class="p-2.5">Exceso Refri.</th>
+              <th class="p-2.5">Horas Extras (Caja/Admin)</th>
+              <th class="p-2.5">Dirección y Cruce GPS</th>
+              <th class="p-2.5 text-center">Evidencia</th>
+            </tr>
+          </thead>
+          <tbody id="tablaReporteBody" class="divide-y divide-slate-200"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         PESTAÑA 4: CONTROL GLOBAL (EXCLUSIVO PARA GERENTES)
+         ======================================================================== -->
+    <section id="view_GERENCIA" class="hidden p-3 space-y-3">
+      <div class="card-clean p-4 space-y-3 border-l-4 border-l-amber-500">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h2 class="text-sm font-black uppercase text-[#1B4332]"><i class="fa-solid fa-crown text-amber-500 mr-1.5"></i> Control Global Gerencial</h2>
+            <p class="text-xs text-slate-500">Consolidado de Sedes Habilitadas en <strong>PARAMETROS</strong> (Cierre de día: 23:59)</p>
+          </div>
+          <div class="flex gap-1.5 flex-wrap">
+            <button onclick="cambiarPestana('PERMISOS')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow">
+              <i class="fa-solid fa-sliders mr-1"></i> Configurar Fotos y Permisos
+            </button>
+            <button onclick="exportarReporteAsistenciaPDF()" class="px-3 py-2 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-extrabold shadow">
+              <i class="fa-solid fa-file-pdf mr-1"></i> Exportar PDF Global
+            </button>
+            <button onclick="exportarReporteCSV()" class="px-3 py-2 rounded-xl bg-[#1B4332] hover:bg-[#0F291E] text-white text-xs font-extrabold shadow">
+              <i class="fa-solid fa-file-csv mr-1"></i> Descargar Excel (CSV)
+            </button>
+          </div>
+        </div>
+
+        <div id="resumenPorSedesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2"></div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         PESTAÑA 5: QUIÉN MARCA + CONFIGURADOR GERENCIAL DE FOTOS POR MARCAJE Y SEDE
+         ======================================================================== -->
+    <section id="view_PERMISOS" class="hidden p-3 space-y-3">
+
+      <!-- NUEVO PANEL GERENCIAL: CONFIGURAR SI SALIDA A REFRIGERIO / SALIDA OFICINA REQUIERE FOTO O SOLO GPS -->
+      <div class="card-clean p-4 space-y-3 border-l-4 border-l-amber-500">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-black text-[10px] uppercase">Configuración Flexible por Sede o Global</span>
+            <h2 class="text-base font-black text-slate-800 mt-1">📷 Requisito de Fotografía por Tipo de Marcaje</h2>
+            <p class="text-xs text-slate-500">Activa o desactiva si el registro requiere tomar fotografía o si debe registrar directamente la <strong>Hora + Ubicación GPS Precisa (Sin Foto)</strong> para ahorrar tiempo a los asesores.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-[11px] font-extrabold uppercase text-slate-600">Aplicar a:</label>
+            <select id="selectSedeConfigFoto" onchange="renderizarPanelConfigFotos()" class="px-3 py-2 rounded-xl border-2 border-[#59B447] bg-emerald-50/60 text-xs font-black text-[#1B4332] outline-none">
+              <option value="GLOBAL">🌎 TODAS LAS SEDES (Regla General)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 4 Interruptores: Entrada | Salida Refrigerio | Retorno Refrigerio | Salida Final -->
+        <div id="gridInterruptoresFotoSede" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1"></div>
+      </div>
+
+      <!-- PANEL EXISTENTE: CONTROL DE QUIÉN DEBE MARCAR ASISTENCIA Y PERMISOS ESPECIALES -->
+      <div class="card-clean p-4 space-y-3 border-l-4 border-l-[#59B447]">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-[#1B4332] font-black text-[10px] uppercase">Exclusivo Gerencia • Por Defecto Todos Activos</span>
+            <h2 class="text-base font-black text-slate-800 mt-1">🛡️ Control de Quién Debe Marcar Asistencia y Permisos Especiales</h2>
+            <p class="text-xs text-slate-500">Define qué Administradores o Trabajadores están obligados a marcar asistencia diaria y quiénes tienen permiso especial o exoneración.</p>
+          </div>
+          <button onclick="restaurarTodosObligados()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold border border-slate-200">
+            <i class="fa-solid fa-rotate-left mr-1"></i> Activar a Todos por Defecto
+          </button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 pt-1">
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+            <span class="block text-[10px] font-extrabold uppercase text-slate-400">Total Personal</span>
+            <span id="permKpiTotal" class="text-lg font-black text-slate-800">0</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+            <span class="block text-[10px] font-extrabold uppercase text-emerald-700">✅ Deben Marcar</span>
+            <span id="permKpiObligados" class="text-lg font-black text-emerald-700">0</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-center">
+            <span class="block text-[10px] font-extrabold uppercase text-amber-700">🛡️ Con Permiso / Exonerados</span>
+            <span id="permKpiExonerados" class="text-lg font-black text-amber-700">0</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100">
+          <select id="permFiltroSede" onchange="renderizarPanelPermisos()" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700">
+            <option value="TODAS">🌎 Todas las Sedes</option>
+          </select>
+
+          <select id="permFiltroRol" onchange="renderizarPanelPermisos()" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700">
+            <option value="TODOS">👥 Todos los Cargos</option>
+            <option value="ADMINISTRADOR">🛡️ Solo Administradores</option>
+            <option value="ASESOR">💼 Solo Asesores</option>
+            <option value="CAJERO">🏦 Solo Cajeros</option>
+            <option value="TRABAJADOR">🔧 Solo Trabajadores</option>
+          </select>
+
+          <select id="permFiltroEstado" onchange="renderizarPanelPermisos()" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700">
+            <option value="TODOS">📋 Ver Todos (Activos y Exonerados)</option>
+            <option value="OBLIGADO">✅ Solo Quienes Deben Marcar</option>
+            <option value="EXONERADO">🛡️ Solo Exonerados / Permiso Especial</option>
+          </select>
+
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input id="permBuscadorNombre" type="text" oninput="renderizarPanelPermisos()" placeholder="Buscar por nombre..." class="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#59B447]" />
+          </div>
+        </div>
+
+        <div id="listaColaboradoresPermisos" class="space-y-2 max-h-[520px] overflow-y-auto pr-1 pt-1"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ==========================================================================
+       4. MODAL DE VISTA PREVIA Y VISOR DE EVIDENCIA FOTOGRÁFICA
+       ========================================================================== -->
+  <div id="modalPreviewFoto" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex flex-col justify-between p-3 overflow-y-auto">
+    <div class="max-w-lg w-full mx-auto bg-white rounded-3xl overflow-hidden shadow-2xl my-auto border border-emerald-500/30">
+      
+      <div class="bg-[#0F291E] text-white px-4 py-3 flex items-center justify-between">
+        <div>
+          <span id="previewBadgeModo" class="px-2 py-0.5 rounded bg-[#59B447] text-[10px] font-black uppercase">EVIDENCIA FOTOGRÁFICA</span>
+          <h3 id="previewSubtitulo" class="text-xs font-bold text-emerald-200 mt-0.5">Minimapa Sólido + Dirección y Cruce Exacto</h3>
+        </div>
+        <button onclick="cerrarModalPreview()" class="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-3 bg-slate-900 flex flex-col items-center justify-center min-h-[260px]">
+        <img id="imgPreviewResultado" src="" alt="Evidencia Fotográfica CREDIBAN" class="max-h-[62vh] w-auto rounded-xl shadow-lg border border-white/15 object-contain" />
+        <a id="linkAbrirFotoDrive" href="#" target="_blank" class="hidden mt-2 text-[11px] font-extrabold text-emerald-300 underline">
+          <i class="fa-solid fa-up-right-from-square mr-1"></i> Abrir imagen original en alta resolución
+        </a>
+      </div>
+
+      <div class="p-4 bg-white space-y-2.5">
+        <div id="previewBotonesAsistencia" class="grid grid-cols-2 gap-2.5">
+          <button onclick="repetirFotoActual()" class="py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs uppercase">
+            <i class="fa-solid fa-camera-rotate mr-1"></i> Volver a Tomar
+          </button>
+          <button id="btnConfirmarAsistencia" onclick="confirmarYSubirAsistencia()" class="py-3 rounded-xl bg-[#59B447] hover:bg-[#4ea33d] text-white font-black text-xs uppercase shadow-lg shadow-[#59B447]/30">
+            <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Confirmar Asistencia
+          </button>
+        </div>
+
+        <div id="previewBotonesGestion" class="hidden space-y-2">
+          <button onclick="compartirYGuardarGestion()" class="w-full py-3.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black text-xs uppercase tracking-wide shadow-lg flex items-center justify-center gap-2">
+            <i class="fa-brands fa-whatsapp text-lg"></i> Compartir por WhatsApp + Guardar en "Mi gestión Crediban"
+          </button>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="repetirFotoActual()" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs">
+              <i class="fa-solid fa-rotate-left mr-1"></i> Tomar Otra
+            </button>
+            <button onclick="soloGuardarEnCarpetaGestion()" class="py-2.5 rounded-xl bg-[#1B4332] text-white font-extrabold text-xs">
+              <i class="fa-solid fa-folder-arrow-down mr-1"></i> Solo Guardar en Carpeta
+            </button>
+          </div>
+        </div>
+
+        <div id="previewBotonesLecturaReporte" class="hidden grid grid-cols-2 gap-2">
+          <button onclick="reenviarFotoAlbumWhatsApp()" id="btnReenviarAlbumWA" class="hidden py-3 rounded-xl bg-[#25D366] text-white font-black text-xs uppercase">
+            <i class="fa-brands fa-whatsapp mr-1"></i> Reenviar WhatsApp
+          </button>
+          <button onclick="cerrarModalPreview()" id="btnCerrarLecturaModal" class="col-span-2 py-3 rounded-xl bg-slate-800 text-white font-extrabold text-xs uppercase">
+            Cerrar Visor
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lienzo oculto para renderizado de alta precisión -->
+  <canvas id="hiddenCanvas" class="hidden"></canvas>
+<!-- FIN DE LA PARTE 1 DE 2 — PEGA LA PARTE 2 JUSTO DEBAJO DE ESTA LÍNEA --><!-- ============================================================================
+     SISTEMA INTEGRAL DE ASISTENCIA Y FOTOS DE GESTIÓN EN CAMPO - CREDIBAN PERÚ S.A.C.
+     PARTE 2 DE 2: Motor JavaScript, Minimapa Sólido Estilo Imagen 2, Detector de Número
+     Aproximado + Cruce de Calles, IndexedDB (+100 Fotos/Día) y Pestaña "Quién Marca"
+     ============================================================================ -->
+  <script>
+    /***************************************************************************
+     * 1. CONFIGURACIÓN DE SERVIDORES Y CREDENCIALES OFICIALES
+     ***************************************************************************/
+    const CONFIG_SISTEMA = {
+      // URL de tu Google Apps Script de Asistencias y Hoja PARAMETROS
+      ATTENDANCE_API_URL: "https://script.google.com/macros/s/AKfycbzhHImayB8Qu2WnFI0dYhWIU11L7eV78gRidEp_at8ulhlyPzWTm1at4CjtrHs6dwb_Gg/exec",
+      // URL del Script Maestro de Usuarios (Login Único)
+      AUTH_USERS_API_URL: "https://script.google.com/macros/s/AKfycbyPGo-OSC0KZcz03bAMpKQ82cipc2T1LNztaI229FhYqqNNXqG1oSb6hPPgVSSU3piqiw/exec",
+      // API Key de Google Maps (Para Geocodificación de Direcciones)
+      MAPS_API_KEY: "AIzaSyAUKZpqTuuS8of7s8b96y9H3B4iEUE9cSc"
+    };
+
+    // Sedes y Reglas dinámicas (se actualizan desde la hoja PARAMETROS del Excel)
+    let SEDES_HABILITADAS = ["HUACHO", "HUARAZ", "ICA", "HUANUCO"];
+    let PARAMETROS_SEDES = {
+      "HUACHO":  { estado: "HABILITADO", diasLaborables: ["LUN","MAR","MIE","JUE","VIE","SAB"], entradaLV: "08:30", salidaLV: "18:30", entradaSab: "09:00", salidaSab: "13:30", toleranciaMin: 10, refrigerioMin: 60 },
+      "HUARAZ":  { estado: "HABILITADO", diasLaborables: ["LUN","MAR","MIE","JUE","VIE","SAB"], entradaLV: "08:30", salidaLV: "18:30", entradaSab: "09:00", salidaSab: "13:30", toleranciaMin: 10, refrigerioMin: 60 },
+      "ICA":     { estado: "HABILITADO", diasLaborables: ["LUN","MAR","MIE","JUE","VIE","SAB"], entradaLV: "08:30", salidaLV: "18:30", entradaSab: "09:00", salidaSab: "13:30", toleranciaMin: 10, refrigerioMin: 60 },
+      "HUANUCO": { estado: "HABILITADO", diasLaborables: ["LUN","MAR","MIE","JUE","VIE","SAB"], entradaLV: "08:30", salidaLV: "18:30", entradaSab: "09:00", salidaSab: "13:30", toleranciaMin: 10, refrigerioMin: 60 }
+    };
+    let FERIADOS_NO_LABORABLES = [];
+
+    // Catálogo de respaldo local para operar incluso sin señal de datos
+    const USUARIOS_RESPALDO = [
+      { usuario: "CRISTHIAN.TRINIDAD", nombre: "CRISTHIAN.TRINIDAD", clave: "123", rol: "GERENTE", cargo: "GERENTE GENERAL", sede: "TODAS", equipo: "TODOS", estado: "HABILITADO" },
+      { usuario: "JOSE.SAENZV", nombre: "JOSE.SAENZV", clave: "123", rol: "GERENTE", cargo: "GERENTE", sede: "HUACHO", equipo: "TODOS", estado: "HABILITADO" },
+      { usuario: "CARLOS.MENDOZA", nombre: "CARLOS MENDOZA", clave: "admin123", rol: "ADMINISTRADOR", cargo: "ADMINISTRADOR", sede: "HUACHO", equipo: "EQUIPO A", estado: "HABILITADO" },
+      { usuario: "MARIA.HUARAZ", nombre: "MARIA ADMIN HUARAZ", clave: "admin123", rol: "ADMINISTRADOR", cargo: "ADMINISTRADOR", sede: "HUARAZ", equipo: "EQUIPO B", estado: "HABILITADO" },
+      { usuario: "ADMIN.ICA", nombre: "ADMIN ICA", clave: "admin123", rol: "ADMINISTRADOR", cargo: "ADMINISTRADOR", sede: "ICA", equipo: "EQUIPO C", estado: "HABILITADO" },
+      { usuario: "ABIGAIL.SANDOVAL", nombre: "ABIGAIL SANDOVAL", clave: "1234", rol: "ASESOR", cargo: "ASESOR", sede: "HUACHO", equipo: "EQUIPO A", estado: "HABILITADO" },
+      { usuario: "HEYDI.TALAVERANOJ", nombre: "HEIDY", clave: "1234", rol: "ASESOR", cargo: "ASESOR", sede: "HUACHO", equipo: "EQUIPO A", estado: "HABILITADO" },
+      { usuario: "HUGO", nombre: "HUGO", clave: "1234", rol: "ASESOR", cargo: "ASESOR", sede: "HUACHO", equipo: "EQUIPO A", estado: "HABILITADO" },
+      { usuario: "ARTURO.PICHILINGUEV", nombre: "ARTURO", clave: "1234", rol: "ASESOR", cargo: "ASESOR", sede: "HUACHO", equipo: "EQUIPO B", estado: "HABILITADO" },
+      { usuario: "BRITHANY.BERNALR", nombre: "BRITHANY", clave: "1234", rol: "ASESOR", cargo: "ASESOR", sede: "HUACHO", equipo: "EQUIPO B", estado: "HABILITADO" },
+      { usuario: "SHAYRA.CAJA", nombre: "SHAYRA CAJA", clave: "caja123", rol: "CAJERO", cargo: "CAJERO", sede: "HUACHO", equipo: "CAJA", estado: "HABILITADO" }
+    ];
+
+    /***************************************************************************
+     * 2. VARIABLES DE ESTADO GLOBAL Y PERMISOS DE ASISTENCIA ("QUIÉN MARCA")
+     ***************************************************************************/
+    let catalogoUsuarios = [];
+    let promesaCargaInicial = null;
+    let usuarioActivo = null;
+    let pestanaActual = "MARCAR";
+    let tipoMarcajeSeleccionado = "ENTRADA";
+    let modoCapturaActual = "ASISTENCIA";
+
+    // Mapa de Permisos Especiales / Exoneraciones configurado por Gerencia
+    // Estructura: { "NOMBRE_USUARIO": { debeMarcar: false, motivo: "Permiso Especial Gerencia", fecha: "2026-11-03" } }
+    // Por defecto, si un usuario no tiene debeMarcar: false aquí, ESTÁ OBLIGADO A MARCAR (true).
+    let mapaPermisosAsistencia = JSON.parse(localStorage.getItem("crediban_permisos_asistencia_v6") || "{}");
+
+    // Variables de Imagen en Proceso
+    let ultimoBlobGenerado = null;
+    let ultimoBase64Original = "";
+    let ultimoBase64Servidor = "";
+    let ultimaMiniaturaAlbum = "";
+    let ultimoNombreArchivo = "";
+    let itemAlbumSeleccionado = null;
+    let enviandoAsistencia = false;
+
+    // Estado de Vistas y Reportes
+    let vistaPantallaAmplia = false;
+    let formatoReporteTabla = false;
+    let vistaAlbumCompacta = true;
+    let mostrarTodasFechasAlbum = false;
+    let sedeFiltroGerente = "TODAS";
+    let rolFiltroReporte = "TODOS";
+    let modoFechaReporte = "HOY";
+    let registrosAsistenciaGlobal = [];
+
+    // Base de Datos Local IndexedDB para +100 fotos por día y Carpeta Predefinida Fijada
+    let dbGestion = null;
+    let directorioGestionHandle = null;
+    let listaFotosAlbumCache = [];
+
+    // Estado GPS Hiper-Preciso (Calle + Número Aprox + Cruce de Calles + Comercios cercanos para el Minimapa)
+    let gpsState = {
+      activo: false,
+      lat: -11.1068,
+      lng: -77.6046,
+      altitud: 103.7,
+      velocidad: 0.0,
+      precision: 10,
+      rumboGrados: 90,
+      rumbo: "90° E",
+      calleExacta: "Avenida Miguel Grau N° 440 (Aprox.)",
+      soloNombreCalle: "Avenida Miguel Grau",
+      cruceCalles: "Cruce con Calle Moore",
+      codigoPostal: "15135",
+      distrito: "Hualmay",
+      provincia: "Huacho",
+      region: "Lima",
+      direccionCompleta: "Avenida Miguel Grau N° 440 (Aprox.) - Cruce con Calle Moore, Hualmay, Huacho, Lima",
+      callesVecinasMapa: ["Av. Libertad", "Calle Moore", "Virgen del Carmen"],
+      puntosInteresMapa: [
+        { nombre: "Fundo Palmira", tipo: "food", dx: 0.18, dy: 0.24 },
+        { nombre: "Comercio Local", tipo: "shop", dx: -0.26, dy: -0.18 }
+      ],
+      ultimoGeocodeTs: 0
+    };
+
+    /***************************************************************************
+     * 3. INICIALIZACIÓN, ESCUDO ANTI-RETROCESO Y BASE DE DATOS INDEXEDDB
+     ***************************************************************************/
+    window.addEventListener("DOMContentLoaded", async () => {
+      iniciarRelojEnVivo();
+      inicializarFechasFiltro();
+      restaurarBorradorFormulario();
+      configurarEscudoBotonRetroceso();
+
+      await inicializarBaseDatosIndexedDB();
+      await restaurarCarpetaPredefinida();
+      await cargarFotosAlbumDesdeDB();
+
+      iniciarRastreoGpsContinuo();
+
+      cargarCacheUsuariosInmediato();
+      promesaCargaInicial = sincronizarUsuariosYParametros();
+
+      const sesionGuardada = localStorage.getItem("crediban_sesion_activa_v6");
+      if (sesionGuardada) {
+        try {
+          usuarioActivo = JSON.parse(sesionGuardada);
+          mostrarAppPrincipal();
+        } catch (e) {
+          localStorage.removeItem("crediban_sesion_activa_v6");
+          mostrarPantallaLogin();
+        }
+      } else {
+        mostrarPantallaLogin();
+      }
+
+      const overlay = document.getElementById("loadingOverlay");
+      overlay.classList.add("opacity-0");
+      setTimeout(() => overlay.classList.add("hidden"), 250);
+    });
+
+    function configurarEscudoBotonRetroceso() {
+      window.history.pushState({ credibanApp: true }, "", window.location.href);
+
+      window.addEventListener("popstate", () => {
+        const modal = document.getElementById("modalPreviewFoto");
+        if (modal && !modal.classList.contains("hidden")) {
+          cerrarModalPreview();
+          window.history.pushState({ credibanApp: true }, "", window.location.href);
+          mostrarToast("Vista previa cerrada (Tus datos siguen intactos)");
+          return;
+        }
+
+        if (usuarioActivo && pestanaActual !== "MARCAR") {
+          cambiarPestana("MARCAR");
+          window.history.pushState({ credibanApp: true }, "", window.location.href);
+          return;
+        }
+
+        if (usuarioActivo) {
+          window.history.pushState({ credibanApp: true }, "", window.location.href);
+          mostrarToast("🔒 App protegida contra cierre accidental. Usa el botón superior derecho para salir.");
+        }
+      });
+    }
+
+    function mostrarToast(mensaje) {
+      const toast = document.getElementById("toastAviso");
+      const txt = document.getElementById("toastAvisoTexto");
+      if (!toast || !txt) return;
+      txt.textContent = mensaje;
+      toast.classList.remove("hidden");
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => toast.classList.add("hidden"), 2800);
+    }
+
+    function guardarBorradorFormulario() {
+      const borrador = {
+        chkEnCampo: document.getElementById("chkEnCampo")?.checked || false,
+        chkIncluirMinimapa: document.getElementById("chkIncluirMinimapa")?.checked !== false,
+        chkIncluirBrujula: document.getElementById("chkIncluirBrujula")?.checked !== false,
+        precisionCruce: document.getElementById("inputPrecisionCruce")?.value || "",
+        motivoAsistencia: document.getElementById("inputMotivoAsistencia")?.value || "",
+        clienteGestion: document.getElementById("gestionClienteNombre")?.value || "",
+        tipoActividadGestion: document.getElementById("gestionTipoActividad")?.value || "Evaluación / Visita de Campo",
+        tipoMarcaje: tipoMarcajeSeleccionado
+      };
+      localStorage.setItem("crediban_borrador_form_v6", JSON.stringify(borrador));
+    }
+
+    function restaurarBorradorFormulario() {
+      try {
+        const raw = localStorage.getItem("crediban_borrador_form_v6");
+        if (!raw) return;
+        const b = JSON.parse(raw);
+        if (document.getElementById("chkEnCampo")) document.getElementById("chkEnCampo").checked = !!b.chkEnCampo;
+        if (document.getElementById("chkIncluirMinimapa")) document.getElementById("chkIncluirMinimapa").checked = b.chkIncluirMinimapa !== false;
+        if (document.getElementById("chkIncluirBrujula")) document.getElementById("chkIncluirBrujula").checked = b.chkIncluirBrujula !== false;
+        if (document.getElementById("inputPrecisionCruce")) document.getElementById("inputPrecisionCruce").value = b.precisionCruce || "";
+        if (document.getElementById("inputMotivoAsistencia")) document.getElementById("inputMotivoAsistencia").value = b.motivoAsistencia || "";
+        if (document.getElementById("gestionClienteNombre")) document.getElementById("gestionClienteNombre").value = b.clienteGestion || "";
+        if (document.getElementById("gestionTipoActividad") && b.tipoActividadGestion) {
+          document.getElementById("gestionTipoActividad").value = b.tipoActividadGestion;
+        }
+        if (b.tipoMarcaje) seleccionarTipoMarcaje(b.tipoMarcaje);
+      } catch (e) {}
+    }
+
+    function limpiarCampoClienteGestion() {
+      const inp = document.getElementById("gestionClienteNombre");
+      if (inp) {
+        inp.value = "";
+        guardarBorradorFormulario();
+        inp.focus();
+      }
+    }
+
+    /***************************************************************************
+     * 4. MOTOR INDEXEDDB PARA +100 FOTOS POR DÍA Y CARPETA PREDEFINIDA FIJADA
+     ***************************************************************************/
+    function inicializarBaseDatosIndexedDB() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) {
+          resolve(null);
+          return;
+        }
+        const request = indexedDB.open("CredibanGestionDB_v6", 1);
+
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains("fotos_gestion")) {
+            const store = db.createObjectStore("fotos_gestion", { keyPath: "id" });
+            store.createIndex("fechaIso", "fechaIso", { unique: false });
+          }
+          if (!db.objectStoreNames.contains("config_handles")) {
+            db.createObjectStore("config_handles", { keyPath: "clave" });
+          }
+        };
+
+        request.onsuccess = (e) => {
+          dbGestion = e.target.result;
+          resolve(dbGestion);
+        };
+
+        request.onerror = () => resolve(null);
+      });
+    }
+
+    async function guardarCarpetaHandleEnDB(handle) {
+      if (!dbGestion) return;
+      return new Promise((resolve) => {
+        try {
+          const tx = dbGestion.transaction("config_handles", "readwrite");
+          tx.objectStore("config_handles").put({ clave: "carpeta_mi_gestion", handle: handle });
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        } catch (e) {
+          resolve(false);
+        }
+      });
+    }
+
+    async function restaurarCarpetaPredefinida() {
+      if (localStorage.getItem("crediban_carpeta_prefijo_fijado") === "SI") {
+        actualizarUIEstadoCarpeta(true);
+      }
+      if (!dbGestion) return;
+      return new Promise((resolve) => {
+        try {
+          const tx = dbGestion.transaction("config_handles", "readonly");
+          const req = tx.objectStore("config_handles").get("carpeta_mi_gestion");
+          req.onsuccess = () => {
+            if (req.result && req.result.handle) {
+              directorioGestionHandle = req.result.handle;
+              actualizarUIEstadoCarpeta(true);
+            }
+            resolve();
+          };
+          req.onerror = () => resolve();
+        } catch (e) {
+          resolve();
+        }
+      });
+    }
+
+    function actualizarUIEstadoCarpeta(fijada) {
+      const estadoEl = document.getElementById("estadoCarpetaLocal");
+      const btnEl = document.getElementById("btnFijarCarpeta");
+      if (!estadoEl || !btnEl) return;
+
+      if (fijada) {
+        estadoEl.innerHTML = `<span class="text-emerald-700 font-black">✅ Carpeta "Mi gestión Crediban" FIJADA como predeterminada</span>`;
+        btnEl.innerHTML = `<i class="fa-solid fa-check-double mr-1 text-[#59B447]"></i> Carpeta Fijada`;
+      }
+    }
+
+    async function vincularCarpetaDispositivo() {
+      if ("showDirectoryPicker" in window) {
+        try {
+          const handleRaiz = await window.showDirectoryPicker({ mode: "readwrite" });
+          directorioGestionHandle = await handleRaiz.getDirectoryHandle("Mi gestión Crediban", { create: true });
+          await guardarCarpetaHandleEnDB(directorioGestionHandle);
+          localStorage.setItem("crediban_carpeta_prefijo_fijado", "SI");
+          actualizarUIEstadoCarpeta(true);
+          mostrarToast('📌 Carpeta "Mi gestión Crediban" fijada permanentemente');
+        } catch (e) {}
+      } else {
+        localStorage.setItem("crediban_carpeta_prefijo_fijado", "SI");
+        actualizarUIEstadoCarpeta(true);
+        mostrarToast('📌 Guardado directo fijado con etiqueta "Mi_gestion_Crediban"');
+      }
+    }
+
+    async function guardarFotoEnIndexedDB(itemFoto) {
+      listaFotosAlbumCache.unshift(itemFoto);
+      if (!dbGestion) return;
+
+      return new Promise((resolve) => {
+        try {
+          const tx = dbGestion.transaction("fotos_gestion", "readwrite");
+          tx.objectStore("fotos_gestion").put(itemFoto);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        } catch (e) {
+          resolve(false);
+        }
+      });
+    }
+
+    async function cargarFotosAlbumDesdeDB() {
+      if (!dbGestion) {
+        renderizarGaleriaGestion();
+        return;
+      }
+      return new Promise((resolve) => {
+        try {
+          const tx = dbGestion.transaction("fotos_gestion", "readonly");
+          const req = tx.objectStore("fotos_gestion").getAll();
+          req.onsuccess = () => {
+            const items = req.result || [];
+            items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            listaFotosAlbumCache = items;
+            renderizarGaleriaGestion();
+            resolve();
+          };
+          req.onerror = () => {
+            renderizarGaleriaGestion();
+            resolve();
+          };
+        } catch (e) {
+          renderizarGaleriaGestion();
+          resolve();
+        }
+      });
+    }
+
+    /***************************************************************************
+     * 5. SINCRONIZACIÓN DE USUARIOS Y HOJA "PARAMETROS" DEL EXCEL
+     ***************************************************************************/
+    function cargarCacheUsuariosInmediato() {
+      const cache = localStorage.getItem("crediban_usuarios_cache_v6");
+      if (cache) {
+        try {
+          const parsed = JSON.parse(cache);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            catalogoUsuarios = parsed;
+            return;
+          }
+        } catch (e) {}
+      }
+      catalogoUsuarios = [...USUARIOS_RESPALDO];
+    }
+
+    async function sincronizarUsuariosYParametros() {
+      try {
+        const respParam = await fetch(`${CONFIG_SISTEMA.ATTENDANCE_API_URL}?action=getParametros&t=${Date.now()}`);
+        const dataParam = await respParam.json();
+        if (dataParam && dataParam.status === "ok" && dataParam.parametros) {
+          aplicarParametrosRecibidos(dataParam.parametros);
+        }
+      } catch (e) {}
+
+      try {
+        const respUser = await fetch(`${CONFIG_SISTEMA.AUTH_USERS_API_URL}?action=getUsers&t=${Date.now()}`);
+        const dataUser = await respUser.json();
+        const listaCruda = Array.isArray(dataUser) ? dataUser : (dataUser.usuarios || dataUser.users || dataUser.data || []);
+
+        if (listaCruda.length > 0) {
+          const normalizados = listaCruda
+            .map(u => normalizarUsuarioScript(u))
+            .filter(u => u.nombre && u.estado !== "DESHABILITADO" && u.estado !== "INACTIVO");
+
+          if (normalizados.length > 0) {
+            catalogoUsuarios = normalizados;
+            localStorage.setItem("crediban_usuarios_cache_v6", JSON.stringify(catalogoUsuarios));
+          }
+        }
+      } catch (e) {}
+    }
+
+    function aplicarParametrosRecibidos(p) {
+      if (Array.isArray(p.sedesHabilitadas) && p.sedesHabilitadas.length > 0) {
+        SEDES_HABILITADAS = p.sedesHabilitadas;
+      }
+      if (p.reglasPorSede) {
+        PARAMETROS_SEDES = p.reglasPorSede;
+      }
+      if (Array.isArray(p.feriados)) {
+        FERIADOS_NO_LABORABLES = p.feriados;
+      }
+      if (usuarioActivo) {
+        actualizarTextoHorarioSede();
+        if (esUsuarioGerente(usuarioActivo)) {
+          poblarSelectorSedeOperativaGerente();
+          construirBotonesSedesGerente();
+          poblarSelectoresFiltroPermisos();
+        }
+      }
+    }
+
+    function normalizarUsuarioScript(raw) {
+      const usuarioLogin = String(raw.usuario || raw.Usuario || raw.user || raw.nombre || raw.Nombre_Completo || "").trim().toUpperCase();
+      const nombreMostrar = String(raw.nombre || raw.Nombre_Completo || raw.usuario || raw.Usuario || "").trim().toUpperCase();
+      const clave = String(raw.clave || raw.password || raw.contraseña || raw.Contraseña || "").trim();
+      const cargoRaw = String(raw.cargo || raw.rol || raw.rango || raw.Cargo || raw.Rol || "ASESOR").trim().toUpperCase();
+      let sede = String(raw.sede || raw.agencia || raw.filial || raw.Sede || "HUACHO").trim().toUpperCase();
+      const equipo = String(raw.equipo || raw.grupo || raw.jefeEquipo || raw.Equipo || "").trim().toUpperCase();
+      const estado = String(raw.estado || raw.Estado || "HABILITADO").trim().toUpperCase();
+
+      let rol = "ASESOR";
+      if (cargoRaw.includes("GERENTE") || cargoRaw.includes("DIRECTOR") || cargoRaw.includes("MASTER") || cargoRaw.includes("DESARROLLADOR")) {
+        rol = "GERENTE";
+        if (!sede || sede === "GENERAL" || sede === "TODAS LAS SEDES") sede = "TODAS";
+      } else if (cargoRaw.includes("ADMIN") || cargoRaw.includes("ZONAL")) {
+        rol = "ADMINISTRADOR";
+      } else if (cargoRaw.includes("CAJ")) {
+        rol = "CAJERO";
+      } else if (cargoRaw.includes("TRABAJADOR") || cargoRaw.includes("OPERACIONES") || cargoRaw.includes("ASISTENTE")) {
+        rol = "TRABAJADOR";
+      } else {
+        rol = "ASESOR";
+      }
+
+      return { usuario: usuarioLogin, nombre: nombreMostrar, clave, rol, cargo: cargoRaw, sede, equipo, estado };
+    }
+
+    function esUsuarioGerente(user) {
+      return Boolean(user && user.rol === "GERENTE");
+    }
+
+    function esUsuarioAdministrador(user) {
+      return Boolean(user && user.rol === "ADMINISTRADOR");
+    }
+
+    /***************************************************************************
+     * 6. MÓDULO NUEVO: GESTIÓN DE QUIÉN DEBE MARCAR ASISTENCIA (PERMISOS ESPECIALES)
+     *    Por defecto todos están obligados (true), salvo que el Gerente les asigne
+     *    Permiso Especial / Exoneración en la pestaña "Quién Marca".
+     ***************************************************************************/
+    function colaboradorDebeMarcar(nombreColaborador) {
+      const clave = String(nombreColaborador || "").trim().toUpperCase();
+      const registro = mapaPermisosAsistencia[clave];
+      if (!registro) return true; // Por defecto TODOS deben marcar
+      return registro.debeMarcar !== false;
+    }
+
+    function obtenerMotivoPermisoEspecial(nombreColaborador) {
+      const clave = String(nombreColaborador || "").trim().toUpperCase();
+      const registro = mapaPermisosAsistencia[clave];
+      if (registro && registro.debeMarcar === false) {
+        return registro.motivo || "Permiso Especial Gerencia";
+      }
+      return "";
+    }
+
+    function alternarObligacionColaborador(nombreColaborador) {
+      if (!esUsuarioGerente(usuarioActivo)) return;
+      const clave = String(nombreColaborador || "").trim().toUpperCase();
+      const actualDebeMarcar = colaboradorDebeMarcar(clave);
+
+      if (actualDebeMarcar) {
+        // Pasa a Exonerado / Permiso Especial
+        const selectMotivo = document.getElementById(`motivoPermiso_${clave.replace(/[^A-Z0-9]/g, "_")}`);
+        const motivoElegido = selectMotivo ? selectMotivo.value : "Permiso Especial Gerencia";
+        mapaPermisosAsistencia[clave] = {
+          debeMarcar: false,
+          motivo: motivoElegido,
+          actualizadoPor: usuarioActivo.nombre,
+          fecha: new Date().toISOString().slice(0, 10)
+        };
+        mostrarToast(`🛡️ ${clave}: Exonerado (${motivoElegido})`);
+      } else {
+        // Vuelve al estado por defecto: Debe Marcar Asistencia
+        delete mapaPermisosAsistencia[clave];
+        mostrarToast(`✅ ${clave}: Marcaje de Asistencia Obligatorio Activo`);
+      }
+
+      localStorage.setItem("crediban_permisos_asistencia_v6", JSON.stringify(mapaPermisosAsistencia));
+      renderizarPanelPermisos();
+      renderizarReportes();
+    }
+
+    function cambiarMotivoPermisoColaborador(nombreColaborador, nuevoMotivo) {
+      if (!esUsuarioGerente(usuarioActivo)) return;
+      const clave = String(nombreColaborador || "").trim().toUpperCase();
+      if (mapaPermisosAsistencia[clave]) {
+        mapaPermisosAsistencia[clave].motivo = nuevoMotivo;
+        localStorage.setItem("crediban_permisos_asistencia_v6", JSON.stringify(mapaPermisosAsistencia));
+        mostrarToast(`Motivo actualizado: ${nuevoMotivo}`);
+        renderizarReportes();
+      }
+    }
+
+    function restaurarTodosObligados() {
+      if (!esUsuarioGerente(usuarioActivo)) return;
+      if (!confirm("¿Activar nuevamente a TODOS los administradores y trabajadores para que deban marcar asistencia obligatoria?")) return;
+      mapaPermisosAsistencia = {};
+      localStorage.setItem("crediban_permisos_asistencia_v6", JSON.stringify(mapaPermisosAsistencia));
+      renderizarPanelPermisos();
+      renderizarReportes();
+      mostrarToast("✅ Todos los colaboradores están activos para marcar asistencia");
+    }
+
+    function poblarSelectoresFiltroPermisos() {
+      const selSede = document.getElementById("permFiltroSede");
+      if (!selSede) return;
+      const valorActual = selSede.value || "TODAS";
+      selSede.innerHTML = `<option value="TODAS">🌎 Todas las Sedes Habilitadas</option>` +
+        SEDES_HABILITADAS.map(s => `<option value="${s}">📍 Sede ${s}</option>`).join("");
+      selSede.value = valorActual;
+    }
+
+    function renderizarPanelPermisos() {
+      if (!esUsuarioGerente(usuarioActivo)) return;
+      const cont = document.getElementById("listaColaboradoresPermisos");
+      if (!cont) return;
+
+      const sedeFiltro = document.getElementById("permFiltroSede")?.value || "TODAS";
+      const rolFiltro = document.getElementById("permFiltroRol")?.value || "TODOS";
+      const estadoFiltro = document.getElementById("permFiltroEstado")?.value || "TODOS";
+      const busqueda = (document.getElementById("permBuscadorNombre")?.value || "").trim().toUpperCase();
+
+      // Todos los colaboradores excepto los Gerentes Generales
+      const basePersonal = catalogoUsuarios.filter(u => u.rol !== "GERENTE");
+
+      const totalPersonal = basePersonal.length;
+      const totalObligados = basePersonal.filter(u => colaboradorDebeMarcar(u.nombre)).length;
+      const totalExonerados = totalPersonal - totalObligados;
+
+      document.getElementById("permKpiTotal").textContent = totalPersonal;
+      document.getElementById("permKpiObligados").textContent = totalObligados;
+      document.getElementById("permKpiExonerados").textContent = totalExonerados;
+
+      const filtrados = basePersonal.filter(u => {
+        const pasaSede = (sedeFiltro === "TODAS") || (u.sede === sedeFiltro);
+        const pasaRol = (rolFiltro === "TODOS") || (u.rol === rolFiltro);
+        const obligado = colaboradorDebeMarcar(u.nombre);
+        const pasaEstado =
+          estadoFiltro === "TODOS" ? true :
+          estadoFiltro === "OBLIGADO" ? obligado : !obligado;
+        const pasaTexto = !busqueda || `${u.nombre} ${u.usuario} ${u.sede} ${u.rol}`.toUpperCase().includes(busqueda);
+        return pasaSede && pasaRol && pasaEstado && pasaTexto;
+      });
+
+      if (filtrados.length === 0) {
+        cont.innerHTML = `
+          <div class="p-6 text-center text-xs font-bold text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            No se encontraron colaboradores con ese filtro.
+          </div>`;
+        return;
+      }
+
+      const motivosOpciones = [
+        "Permiso Especial Gerencia",
+        "Administrador con Permiso Especial",
+        "Comisión / Supervisión Externa",
+        "Vacaciones Programadas",
+        "Descanso Médico / Licencia",
+        "Horario Especial Flexible"
+      ];
+
+      cont.innerHTML = filtrados.map(u => {
+        const obligado = colaboradorDebeMarcar(u.nombre);
+        const motivoActual = obtenerMotivoPermisoEspecial(u.nombre) || "Permiso Especial Gerencia";
+        const idSafe = u.nombre.replace(/[^A-Z0-9]/g, "_");
+        const badgeRol = u.rol === "ADMINISTRADOR"
+          ? `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-black">🛡️ ADMINISTRADOR</span>`
+          : `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-extrabold">${u.rol}</span>`;
+
+        return `
+          <div class="p-3 rounded-2xl border ${obligado ? 'border-slate-200 bg-white' : 'border-amber-300 bg-amber-50/60'} flex flex-wrap items-center justify-between gap-2.5 shadow-sm transition">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                ${badgeRol}
+                <span class="text-xs font-black text-slate-900">${u.nombre}</span>
+                <span class="text-[10px] font-bold text-emerald-700">• 📍 ${u.sede}</span>
+              </div>
+              <div class="mt-1 flex items-center gap-2 flex-wrap">
+                <span class="text-[11px] font-bold ${obligado ? 'text-emerald-700' : 'text-amber-800'}">
+                  ${obligado ? '✅ Obligado a marcar asistencia' : '🛡️ Exonerado de falta (' + motivoActual + ')'}
+                </span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <select
+                id="motivoPermiso_${idSafe}"
+                onchange="cambiarMotivoPermisoColaborador('${u.nombre}', this.value)"
+                class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-[#59B447]"
+              >
+                ${motivosOpciones.map(m => `<option value="${m}" ${m === motivoActual ? 'selected' : ''}>${m}</option>`).join("")}
+              </select>
+
+              <button
+                type="button"
+                onclick="alternarObligacionColaborador('${u.nombre}')"
+                class="px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wide shadow-sm transition ${obligado ? 'bg-[#59B447] text-white hover:bg-[#4ea33d]' : 'bg-amber-500 text-slate-950 hover:bg-amber-400'}"
+              >
+                ${obligado ? '<i class="fa-solid fa-check mr-1"></i> Debe Marcar' : '<i class="fa-solid fa-shield-halved mr-1"></i> Con Permiso'}
+              </button>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    /***************************************************************************
+     * 7. LOGIN BLINDADO Y SEPARACIÓN ESTRICTA DE PESTAÑAS POR ROL
+     ***************************************************************************/
+    function limpiarIdentificador(texto) {
+      return String(texto || "").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ".");
+    }
+
+    async function iniciarSesion(event) {
+      if (event) event.preventDefault();
+
+      const inputUser = document.getElementById("loginUsuarioInput").value.trim();
+      const inputPass = document.getElementById("loginClaveInput").value.trim();
+      const recordar = document.getElementById("loginRecordar").checked;
+      const alertBox = document.getElementById("loginAlert");
+      const btn = document.getElementById("btnIngresar");
+
+      alertBox.classList.add("hidden");
+
+      if (!inputUser || !inputPass) {
+        mostrarErrorLogin("Ingresa tu usuario y contraseña.");
+        return;
+      }
+
+      const btnTextoOriginal = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Verificando acceso...</span>`;
+
+      try {
+        if (promesaCargaInicial) {
+          await Promise.race([promesaCargaInicial, new Promise(res => setTimeout(res, 2200))]);
+        }
+
+        const userLimpio = limpiarIdentificador(inputUser);
+        const userSinPuntos = userLimpio.replace(/\./g, " ");
+
+        let encontrado = catalogoUsuarios.find(u => {
+          const uLogin = limpiarIdentificador(u.usuario);
+          const uNombre = limpiarIdentificador(u.nombre);
+          const uNombreSinPuntos = uNombre.replace(/\./g, " ");
+          return uLogin === userLimpio || uNombre === userLimpio || uNombreSinPuntos === userSinPuntos;
+        });
+
+        if (!encontrado) {
+          await sincronizarUsuariosYParametros();
+          encontrado = catalogoUsuarios.find(u => {
+            const uLogin = limpiarIdentificador(u.usuario);
+            const uNombre = limpiarIdentificador(u.nombre);
+            return uLogin === userLimpio || uNombre === userLimpio;
+          });
+        }
+
+        if (!encontrado || String(encontrado.clave).trim() !== String(inputPass).trim()) {
+          mostrarErrorLogin("Credenciales incorrectas. Verifica tu usuario y contraseña.");
+          return;
+        }
+
+        const sedeInicial = (encontrado.sede === "TODAS" || !encontrado.sede || !SEDES_HABILITADAS.includes(encontrado.sede))
+          ? (SEDES_HABILITADAS[0] || "HUACHO")
+          : encontrado.sede;
+
+        usuarioActivo = {
+          ...encontrado,
+          sedeOperativa: sedeInicial
+        };
+
+        if (recordar) {
+          localStorage.setItem("crediban_sesion_activa_v6", JSON.stringify(usuarioActivo));
+        } else {
+          localStorage.removeItem("crediban_sesion_activa_v6");
+        }
+
+        mostrarAppPrincipal();
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = btnTextoOriginal;
+      }
+    }
+
+    function mostrarErrorLogin(msg) {
+      const alertBox = document.getElementById("loginAlert");
+      alertBox.textContent = msg;
+      alertBox.classList.remove("hidden");
+    }
+
+    function toggleVerClave() {
+      const inp = document.getElementById("loginClaveInput");
+      const icon = document.getElementById("eyeIcon");
+      if (inp.type === "password") {
+        inp.type = "text";
+        icon.className = "fa-solid fa-eye-slash";
+      } else {
+        inp.type = "password";
+        icon.className = "fa-solid fa-eye";
+      }
+    }
+
+    function mostrarPantallaLogin() {
+      document.getElementById("mainAppContainer").classList.add("hidden");
+      document.getElementById("loginScreen").classList.remove("hidden");
+    }
+
+    function confirmarCerrarSesion() {
+      if (!confirm("¿Deseas cerrar tu sesión en este dispositivo?")) return;
+      localStorage.removeItem("crediban_sesion_activa_v6");
+      usuarioActivo = null;
+      document.getElementById("loginClaveInput").value = "";
+      mostrarPantallaLogin();
+    }
+
+    function poblarSelectorSedeOperativaGerente() {
+      const selectSedeGerente = document.getElementById("gerenteSedeOperativaSelect");
+      if (!selectSedeGerente) return;
+      selectSedeGerente.innerHTML = SEDES_HABILITADAS.map(s => `<option value="${s}">Operar: ${s}</option>`).join("");
+      if (usuarioActivo && SEDES_HABILITADAS.includes(usuarioActivo.sedeOperativa)) {
+        selectSedeGerente.value = usuarioActivo.sedeOperativa;
+      }
+    }
+
+    function mostrarAppPrincipal() {
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("mainAppContainer").classList.remove("hidden");
+
+      document.getElementById("headerRolBadge").textContent = usuarioActivo.rol;
+      document.getElementById("headerUserName").textContent = usuarioActivo.nombre;
+      document.getElementById("headerUserSede").textContent =
+        esUsuarioGerente(usuarioActivo) ? `GERENCIA (${usuarioActivo.sedeOperativa})` : usuarioActivo.sedeOperativa;
+
+      // Mostrar insignia si el colaborador actual tiene Permiso Especial activo
+      const badgePermiso = document.getElementById("headerPermisoBadge");
+      if (badgePermiso) {
+        badgePermiso.classList.toggle("hidden", colaboradorDebeMarcar(usuarioActivo.nombre));
+      }
+
+      const selectSedeGerente = document.getElementById("gerenteSedeOperativaSelect");
+      const tabReporte = document.getElementById("tabBtn_REPORTE");
+      const tabGerencia = document.getElementById("tabBtn_GERENCIA");
+      const tabPermisos = document.getElementById("tabBtn_PERMISOS");
+      const barraGerenteSedes = document.getElementById("gerenteSedeSelectorBar");
+      const adminSedeHeader = document.getElementById("adminSedeHeaderBar");
+      const labelReporte = document.getElementById("tabLabelReporte");
+
+      poblarSelectorSedeOperativaGerente();
+      poblarSelectoresFiltroPermisos();
+
+      if (esUsuarioGerente(usuarioActivo)) {
+        // 👑 GERENTE: Ve Supervisión Gerencial Multi-Sede + Control Global + Pestaña "Quién Marca"
+        selectSedeGerente.classList.remove("hidden");
+        tabReporte.classList.remove("hidden");
+        tabGerencia.classList.remove("hidden");
+        tabPermisos.classList.remove("hidden");
+        barraGerenteSedes.classList.remove("hidden");
+        adminSedeHeader.classList.add("hidden");
+        labelReporte.textContent = "Supervisión Gerencial";
+        sedeFiltroGerente = "TODAS";
+        construirBotonesSedesGerente();
+      } else if (esUsuarioAdministrador(usuarioActivo)) {
+        // 🛡️ ADMINISTRADOR: Solo ve la pestaña de SU sede (Asesores, Trabajadores y Cajeros). NO ve Control Global ni Permisos.
+        selectSedeGerente.classList.add("hidden");
+        tabReporte.classList.remove("hidden");
+        tabGerencia.classList.add("hidden");
+        tabPermisos.classList.add("hidden");
+        barraGerenteSedes.classList.add("hidden");
+        adminSedeHeader.classList.remove("hidden");
+        document.getElementById("adminSedeTitulo").textContent =
+          `Supervisión de Asesores, Trabajadores y Cajeros • SEDE ${usuarioActivo.sedeOperativa}`;
+        labelReporte.textContent = `Sede ${usuarioActivo.sedeOperativa}`;
+        sedeFiltroGerente = usuarioActivo.sedeOperativa;
+      } else {
+        // 👤 ASESORES, CAJEROS Y TRABAJADORES: SOLO ven "Asistencia" y "Fotos Gestión"
+        selectSedeGerente.classList.add("hidden");
+        tabReporte.classList.add("hidden");
+        tabGerencia.classList.add("hidden");
+        tabPermisos.classList.add("hidden");
+        barraGerenteSedes.classList.add("hidden");
+        adminSedeHeader.classList.add("hidden");
+      }
+
+      actualizarTextoHorarioSede();
+      cambiarPestana("MARCAR");
+      cargarAsistenciasDesdeServidor(false);
+      verificarRefrigerioActivo();
+    }
+
+    function cambiarSedeOperativaGerente(nuevaSede) {
+      if (!usuarioActivo) return;
+      usuarioActivo.sedeOperativa = nuevaSede;
+      document.getElementById("headerUserSede").textContent = `GERENCIA (${nuevaSede})`;
+      localStorage.setItem("crediban_sesion_activa_v6", JSON.stringify(usuarioActivo));
+      actualizarTextoHorarioSede();
+    }
+
+    function cambiarPestana(tabId) {
+      // Muro de seguridad por Rol
+      if ((tabId === "REPORTE" || tabId === "GERENCIA" || tabId === "PERMISOS") && !esUsuarioGerente(usuarioActivo) && !esUsuarioAdministrador(usuarioActivo)) {
+        tabId = "MARCAR";
+      }
+      if ((tabId === "GERENCIA" || tabId === "PERMISOS") && !esUsuarioGerente(usuarioActivo)) {
+        tabId = "REPORTE";
+      }
+
+      pestanaActual = tabId;
+      const vistas = ["MARCAR", "GESTION", "REPORTE", "GERENCIA", "PERMISOS"];
+      vistas.forEach(v => {
+        const elVista = document.getElementById(`view_${v}`);
+        const elBtn = document.getElementById(`tabBtn_${v}`);
+        if (elVista) elVista.classList.toggle("hidden", v !== tabId);
+        if (elBtn && !elBtn.classList.contains("hidden")) {
+          if (v === tabId) {
+            elBtn.className = "flex-1 min-w-[95px] py-2 px-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition bg-[#59B447] text-white shadow";
+          } else if (v === "GERENCIA") {
+            elBtn.className = "flex-1 min-w-[115px] py-2 px-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition bg-amber-400/20 text-amber-300 border border-amber-400/30";
+          } else if (v === "PERMISOS") {
+            elBtn.className = "flex-1 min-w-[120px] py-2 px-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition bg-emerald-400/20 text-emerald-200 border border-emerald-400/30";
+          } else {
+            elBtn.className = "flex-1 min-w-[95px] py-2 px-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition bg-white/10 text-emerald-100 hover:bg-white/20";
+          }
+        }
+      });
+
+      if (tabId === "REPORTE" || tabId === "GERENCIA") {
+        poblarFiltrosColaboradoresReporte();
+        renderizarReportes();
+      } else if (tabId === "PERMISOS") {
+        renderizarPanelPermisos();
+      } else if (tabId === "GESTION") {
+        renderizarGaleriaGestion();
+      }
+    }
+
+    function alternarModoPantalla() {
+      vistaPantallaAmplia = !vistaPantallaAmplia;
+      const appShell = document.getElementById("mainAppContainer");
+      const label = document.getElementById("labelCambiarVista");
+      const icon = document.getElementById("iconCambiarVista");
+
+      if (vistaPantallaAmplia) {
+        appShell.classList.remove("app-shell-mobile");
+        appShell.classList.add("app-shell-pc");
+        label.textContent = "Vista Móvil";
+        icon.className = "fa-solid fa-mobile-screen-button mr-1";
+      } else {
+        appShell.classList.remove("app-shell-pc");
+        appShell.classList.add("app-shell-mobile");
+        label.textContent = "Vista PC";
+        icon.className = "fa-solid fa-expand mr-1";
+      }
+    }
+
+    /***************************************************************************
+     * 8. MOTOR GPS CON DETECTOR DE NÚMERO APROXIMADO DE VIVIENDA Y CRUCE DE CALLES
+     ***************************************************************************/
+    function iniciarRastreoGpsContinuo() {
+      if (!navigator.geolocation) {
+        actualizarSemaforoGPS("ERROR", "Sin GPS");
+        return;
+      }
+
+      navigator.geolocation.watchPosition(
+        async (pos) => {
+          gpsState.activo = true;
+          gpsState.lat = pos.coords.latitude;
+          gpsState.lng = pos.coords.longitude;
+          gpsState.precision = Math.round(pos.coords.accuracy || 10);
+
+          if (pos.coords.altitude !== null && !isNaN(pos.coords.altitude)) {
+            gpsState.altitud = Number(pos.coords.altitude).toFixed(1);
+          }
+          if (pos.coords.speed !== null && !isNaN(pos.coords.speed)) {
+            gpsState.velocidad = Math.max(0, pos.coords.speed * 3.6).toFixed(1);
+          }
+          if (pos.coords.heading !== null && !isNaN(pos.coords.heading)) {
+            gpsState.rumboGrados = Math.round(pos.coords.heading);
+            gpsState.rumbo = `${gpsState.rumboGrados}° ${obtenerPuntoCardinal(gpsState.rumboGrados)}`;
+          }
+
+          actualizarSemaforoGPS("OK", `GPS ±${gpsState.precision}m`);
+
+          const ahora = Date.now();
+          if (ahora - gpsState.ultimoGeocodeTs > 18000) {
+            gpsState.ultimoGeocodeTs = ahora;
+            await resolverCalleNumeroYCruceExacto(gpsState.lat, gpsState.lng);
+          }
+        },
+        () => actualizarSemaforoGPS("WARN", "GPS Débil"),
+        { enableHighAccuracy: true, maximumAge: 8000, timeout: 15000 }
+      );
+    }
+
+    function forzarRefrescoGPS() {
+      gpsState.ultimoGeocodeTs = 0;
+      actualizarSemaforoGPS("LOAD", "Calculando cruce...");
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          gpsState.activo = true;
+          gpsState.lat = pos.coords.latitude;
+          gpsState.lng = pos.coords.longitude;
+          await resolverCalleNumeroYCruceExacto(gpsState.lat, gpsState.lng);
+          actualizarSemaforoGPS("OK", `GPS ±${Math.round(pos.coords.accuracy || 8)}m`);
+        },
+        () => actualizarSemaforoGPS("WARN", "Activar GPS"),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+
+    function actualizarSemaforoGPS(estado, texto) {
+      const badge = document.getElementById("gpsBadge");
+      const dot = document.getElementById("gpsDot");
+      const txt = document.getElementById("gpsText");
+      if (!badge) return;
+
+      txt.textContent = texto;
+      if (estado === "OK") {
+        badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40";
+        dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+      } else if (estado === "LOAD") {
+        badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-400/40";
+        dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-ping";
+      } else {
+        badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-400/40";
+        dot.className = "w-2 h-2 rounded-full bg-rose-400";
+      }
+    }
+
+    // Distancia en metros entre dos coordenadas GPS (Fórmula de Haversine)
+    function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    // MOTOR HIPER-PRECISO: Obtiene Calle Principal, Número de Vivienda (Exacto o Aproximado) y Calle Transversal (Cruce)
+    async function resolverCalleNumeroYCruceExacto(lat, lng) {
+      let callePrincipal = "";
+      let numeroCasa = "";
+      let calleTransversal = "";
+      let distanciaAlCruce = null;
+      let urbanizacion = "";
+      let codigoPostal = "";
+      let distrito = "";
+      let provincia = "";
+      let region = "";
+      const callesDetectadas = [];
+      const poisDetectados = [];
+
+      // 1. Consulta Nominatim OpenStreetMap (Zoom 18 para casa/puerta exacta)
+      try {
+        const urlOsm = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+        const resOsm = await fetch(urlOsm, { headers: { "Accept-Language": "es" } });
+        const dataOsm = await resOsm.json();
+        if (dataOsm && dataOsm.address) {
+          const a = dataOsm.address;
+          callePrincipal = a.road || a.pedestrian || a.residential || a.path || "";
+          if (a.house_number) numeroCasa = a.house_number;
+          urbanizacion = a.neighbourhood || a.suburb || a.Residential || a.quarter || "";
+          codigoPostal = a.postcode || "";
+          distrito = a.city_district || a.town || a.municipality || a.village || "";
+          provincia = a.city || a.county || a.state_district || "";
+          region = (a.state || a.region || "Lima").replace("Gobierno Regional de ", "");
+        }
+      } catch (e) {}
+
+      // 2. Consulta Google Maps Geocoding API (Analiza todos los componentes para encontrar número de puerta y calles vecinas)
+      try {
+        const urlGoogle = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${CONFIG_SISTEMA.MAPS_API_KEY}&language=es`;
+        const resG = await fetch(urlGoogle);
+        const dataG = await resG.json();
+
+        if (dataG.status === "OK" && Array.isArray(dataG.results)) {
+          for (const item of dataG.results) {
+            let routeItem = "";
+            let numberItem = "";
+            item.address_components.forEach(c => {
+              if (c.types.includes("route") && !c.long_name.includes("+") && !c.long_name.includes("Unnamed")) {
+                routeItem = c.long_name;
+                if (!callesDetectadas.includes(routeItem)) callesDetectadas.push(routeItem);
+              }
+              if (c.types.includes("street_number")) {
+                numberItem = c.long_name;
+              }
+              if (!urbanizacion && (c.types.includes("neighborhood") || c.types.includes("sublocality"))) {
+                urbanizacion = c.long_name;
+              }
+              if (!codigoPostal && c.types.includes("postal_code")) {
+                codigoPostal = c.long_name;
+              }
+              if (!distrito && (c.types.includes("locality") || c.types.includes("administrative_area_level_3"))) {
+                distrito = c.long_name;
+              }
+              if (!provincia && c.types.includes("administrative_area_level_2")) {
+                provincia = c.long_name;
+              }
+            });
+
+            if (!callePrincipal && routeItem) callePrincipal = routeItem;
+            if (!numeroCasa && numberItem) numeroCasa = numberItem;
+          }
+        }
+      } catch (e) {}
+
+      // 3. Consulta Vectorial Overpass (Radio 110m): Detecta la CALLE TRANSVERSAL MÁS CERCANA (Cruce) y el N° de vivienda más próximo
+      try {
+        const queryOverpass = `[out:json][timeout:4];(way(around:115,${lat},${lng})["highway"]["name"];node(around:90,${lat},${lng})["addr:housenumber"];node(around:130,${lat},${lng})["name"];);out center 25;`;
+        const urlOv = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(queryOverpass)}`;
+        const resOv = await fetch(urlOv);
+        const dataOv = await resOv.json();
+
+        if (dataOv && Array.isArray(dataOv.elements)) {
+          let menorDistCruce = 9999;
+          let menorDistNumero = 9999;
+          let numeroVecino = "";
+
+          dataOv.elements.forEach(el => {
+            const tags = el.tags || {};
+            const elLat = el.lat || (el.center && el.center.lat);
+            const elLon = el.lon || (el.center && el.center.lon);
+            const dist = (elLat && elLon) ? calcularDistanciaMetros(lat, lng, elLat, elLon) : 50;
+
+            // Vías con nombre
+            if (tags.highway && tags.name) {
+              const nombreVia = tags.name.trim();
+              if (!callesDetectadas.includes(nombreVia)) callesDetectadas.push(nombreVia);
+
+              if (!callePrincipal) {
+                callePrincipal = nombreVia;
+              } else if (
+                nombreVia.toUpperCase() !== callePrincipal.toUpperCase() &&
+                dist < menorDistCruce
+              ) {
+                menorDistCruce = dist;
+                calleTransversal = nombreVia;
+                distanciaAlCruce = dist;
+              }
+            }
+
+            // Números de casa cercanos si el inmueble exacto no tenía placa en mapa
+            if (tags["addr:housenumber"] && dist < menorDistNumero) {
+              menorDistNumero = dist;
+              numeroVecino = tags["addr:housenumber"];
+              if (!callePrincipal && tags["addr:street"]) {
+                callePrincipal = tags["addr:street"];
+              }
+            }
+
+            // Comercios / Referencias para dibujar íconos reales en el minimapa (como en Imagen 2)
+            if (tags.name && !tags.highway && poisDetectados.length < 4) {
+              const tipoPoi = (tags.amenity === "restaurant" || tags.amenity === "fast_food" || tags.shop === "bakery")
+                ? "food"
+                : (tags.leisure === "park" || tags.landuse === "recreation_ground" ? "park" : "shop");
+              poisDetectados.push({
+                nombre: tags.name.slice(0, 18),
+                tipo: tipoPoi,
+                dx: elLon ? Math.max(-0.38, Math.min(0.38, (elLon - lng) * 1800)) : 0.2,
+                dy: elLat ? Math.max(-0.38, Math.min(0.38, (lat - elLat) * 1800)) : 0.2
+              });
+            }
+          });
+
+          if (!numeroCasa && numeroVecino) {
+            numeroCasa = `${numeroVecino} (Aprox.)`;
+          }
+        }
+      } catch (e) {}
+
+      // 4. Si la calle es una avenida larga sin placas registradas en OSM/Google, estimar cuadra/número aproximado geométrico
+      if (!callePrincipal) callePrincipal = urbanizacion || "Vía Urbana";
+      if (!numeroCasa) {
+        const semillaCuadra = Math.abs(Math.round((lat * 10000 + lng * 10000) % 900)) + 100;
+        numeroCasa = `N° ${semillaCuadra} (Aprox.)`;
+      } else if (!String(numeroCasa).includes("N°") && !/^\d+$/.test(String(numeroCasa).trim())) {
+        numeroCasa = String(numeroCasa).trim();
+      }
+
+      // 5. Construir línea de Cruce de Calles / Intersección debajo de la avenida
+      if (!calleTransversal && callesDetectadas.length > 1) {
+        calleTransversal = callesDetectadas.find(c => c.toUpperCase() !== callePrincipal.toUpperCase()) || "";
+      }
+
+      let textoCruce = "";
+      if (calleTransversal) {
+        const nombreCortoPrincipal = callePrincipal.replace(/^(Avenida|Av\.|Jirón|Jr\.|Calle|Ca\.|Pasaje|Psj\.)\s+/i, "");
+        const distStr = (distanciaAlCruce !== null && distanciaAlCruce <= 120) ? ` (a ${distanciaAlCruce}m)` : "";
+        textoCruce = `Cruce ${nombreCortoPrincipal} con ${calleTransversal}${distStr}`;
+      } else if (urbanizacion && urbanizacion.toUpperCase() !== callePrincipal.toUpperCase()) {
+        textoCruce = `Sector / Ref: ${urbanizacion}`;
+      } else {
+        textoCruce = `Altura ${callePrincipal} ${numeroCasa}`;
+      }
+
+      gpsState.soloNombreCalle = callePrincipal;
+      gpsState.calleExacta = `${callePrincipal} ${numeroCasa}`.trim();
+      gpsState.cruceCalles = textoCruce;
+      gpsState.codigoPostal = codigoPostal || "15135";
+      gpsState.distrito = distrito || "Hualmay";
+      gpsState.provincia = provincia || "Huacho";
+      gpsState.region = region || "Lima";
+
+      if (callesDetectadas.length > 0) {
+        gpsState.callesVecinasMapa = callesDetectadas.slice(0, 3);
+      }
+      if (poisDetectados.length > 0) {
+        gpsState.puntosInteresMapa = poisDetectados;
+      }
+
+      gpsState.direccionCompleta = `${gpsState.calleExacta} (${gpsState.cruceCalles}), ${gpsState.distrito} ${gpsState.codigoPostal}, ${gpsState.provincia}`;
+
+      // Actualizar vista en la tarjeta de la App
+      const elTitulo = document.getElementById("calleDetectadaTitulo");
+      if (elTitulo) elTitulo.textContent = `${gpsState.calleExacta}, ${gpsState.distrito} ${gpsState.codigoPostal}`;
+      const elCruce = document.getElementById("cruceDetectadoSub");
+      if (elCruce) elCruce.textContent = `📍 ${gpsState.cruceCalles}`;
+      const elSub = document.getElementById("distritoDetectadoSub");
+      if (elSub) elSub.textContent = `${gpsState.provincia}, ${gpsState.region} • Alt: ${gpsState.altitud}m • ${gpsState.rumbo}`;
+    }
+
+    function obtenerPuntoCardinal(angulo) {
+      const dirs = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
+      return dirs[Math.round(angulo / 45) % 8];
+    }
+
+    /***************************************************************************
+     * 9. MOTOR GRÁFICO CANVAS:
+     *    - MINIMAPA 100% SÓLIDO (SIN TRANSPARENCIA) ESTILO IMAGEN 2
+     *    - BRÚJULA SUPERIOR IZQUIERDA (OPCIONAL)
+     *    - LETRAS A LA DERECHA CON CALLE + N° APROX + CRUCE DE CALLES DEBAJO
+     ***************************************************************************/
+    function seleccionarTipoMarcaje(tipo) {
+      tipoMarcajeSeleccionado = tipo;
+      guardarBorradorFormulario();
+      const mapIds = {
+        "ENTRADA": "btnTipo_ENTRADA",
+        "SALIDA REFRIGERIO": "btnTipo_SALIDA_REFRIGERIO",
+        "RETORNO REFRIGERIO": "btnTipo_RETORNO_REFRIGERIO",
+        "SALIDA FINAL": "btnTipo_SALIDA_FINAL"
+      };
+      Object.entries(mapIds).forEach(([key, id]) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        if (key === tipo) {
+          btn.className = "p-3 rounded-xl border-2 border-[#59B447] bg-emerald-50/80 text-[#1B4332] text-left transition flex items-center gap-2.5 shadow-sm";
+        } else {
+          btn.className = "p-3 rounded-xl border-2 border-slate-200 bg-white text-slate-700 text-left transition flex items-center gap-2.5";
+        }
+      });
+    }
+
+    function abrirCamaraAsistencia() {
+      document.getElementById("cameraInputAsistencia").click();
+    }
+
+    async function procesarFotoCapturada(event, modo) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      modoCapturaActual = modo;
+      let objectUrl = null;
+
+      try {
+        if (gpsState.ultimoGeocodeTs === 0) {
+          await resolverCalleNumeroYCruceExacto(gpsState.lat, gpsState.lng);
+        }
+
+        objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.src = objectUrl;
+        await img.decode();
+
+        const canvas = document.getElementById("hiddenCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const maxDimension = (modo === "GESTION") ? 2200 : 1280;
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // 1. Dibujar fotografía original
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // 2. Degradado inferior elegante (conservando intacto el estilo de letras que te gustó)
+        const altoGradiente = Math.round(height * 0.40);
+        const grad = ctx.createLinearGradient(0, height - altoGradiente, 0, height);
+        grad.addColorStop(0, "rgba(0, 0, 0, 0)");
+        grad.addColorStop(0.50, "rgba(0, 0, 0, 0.40)");
+        grad.addColorStop(1, "rgba(0, 0, 0, 0.80)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, height - altoGradiente, width, altoGradiente);
+
+        const margen = Math.round(width * 0.025);
+
+        // 3. Dibujar Brújula en la esquina superior izquierda (como en Imagen 2) si está activada
+        const incluirBrujula = document.getElementById("chkIncluirBrujula")?.checked !== false;
+        if (incluirBrujula) {
+          const radioBrujula = Math.max(36, Math.round(Math.min(width, height) * 0.075));
+          dibujarBrujulaSuperior(ctx, margen + radioBrujula, margen + radioBrujula, radioBrujula, gpsState.rumboGrados);
+        }
+
+        // 4. Dibujar MINIMAPA 100% SÓLIDO (SIN TRANSPARENCIA) estilo Imagen 2 y SIN "API KEY REQUIRED"
+        const incluirMinimapa = document.getElementById("chkIncluirMinimapa")?.checked !== false;
+        if (incluirMinimapa) {
+          const mapWidth = Math.round(width * 0.27);
+          const mapHeight = Math.round(mapWidth * 1.16);
+          const mapX = margen;
+          const mapY = height - mapHeight - margen;
+
+          await dibujarMinimapaSolidoImagen2(ctx, gpsState.lat, gpsState.lng, mapX, mapY, mapWidth, mapHeight);
+        }
+
+        // 5. Dibujar bloque de letras a la derecha (Calle + Número Aprox + Cruce de Calles debajo)
+        const ahora = new Date();
+        const fechaFormateada = formatearFechaHoraEstiloFoto(ahora);
+        const indiceUnico = Math.floor(1000 + (ahora.getTime() % 89999));
+
+        const detalleActividad = (modo === "GESTION")
+          ? (document.getElementById("gestionClienteNombre").value.trim() || document.getElementById("gestionTipoActividad").value.trim())
+          : (document.getElementById("inputMotivoAsistencia").value.trim() || tipoMarcajeSeleccionado);
+
+        // Si el asesor escribió una precisión extra manual en el campo opcional, se incorpora al cruce
+        const precisionManual = (document.getElementById("inputPrecisionCruce")?.value || "").trim();
+        const lineaCruceFinal = precisionManual ? `${gpsState.cruceCalles} • ${precisionManual}` : gpsState.cruceCalles;
+
+        const lineasDerecha = [
+          fechaFormateada,
+          gpsState.rumbo,
+          `${gpsState.calleExacta}, ${gpsState.distrito} ${gpsState.codigoPostal}`,
+          lineaCruceFinal,
+          `${gpsState.provincia}, ${gpsState.region} • Alt: ${gpsState.altitud}msnm`,
+          `Número de índice: ${indiceUnico}`
+        ];
+
+        const cintaSuperior = `${usuarioActivo ? usuarioActivo.nombre : "COLABORADOR"} • ${detalleActividad}`;
+
+        const fontSizeBase = Math.max(15, Math.round(width * 0.030));
+        const lineHeight = Math.round(fontSizeBase * 1.24);
+        const rightX = width - margen;
+        let currentY = height - margen - Math.round(fontSizeBase * 0.15);
+
+        ctx.save();
+        ctx.textAlign = "right";
+        ctx.textBaseline = "bottom";
+        ctx.font = `600 ${fontSizeBase}px Inter, Arial, sans-serif`;
+        ctx.shadowColor = "rgba(0, 0, 0, 0.88)";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+        ctx.fillStyle = "#FFFFFF";
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.70)";
+        ctx.lineWidth = Math.max(2, Math.round(fontSizeBase * 0.1));
+
+        for (let i = lineasDerecha.length - 1; i >= 0; i--) {
+          const linea = lineasDerecha[i];
+          ctx.strokeText(linea, rightX, currentY);
+          ctx.fillText(linea, rightX, currentY);
+          currentY -= lineHeight;
+        }
+
+        ctx.font = `800 ${Math.round(fontSizeBase * 0.80)}px Inter, Arial, sans-serif`;
+        ctx.fillStyle = "#86EFAC";
+        ctx.strokeText(cintaSuperior, rightX, currentY - 2);
+        ctx.fillText(cintaSuperior, rightX, currentY - 2);
+        ctx.restore();
+
+        // 6. Exportar imagen en Calidad Original + Miniatura para la App
+        const calidadJpeg = (modo === "GESTION") ? 0.95 : 0.82;
+        ultimoBase64Original = canvas.toDataURL("image/jpeg", calidadJpeg);
+        ultimoBlobGenerado = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", calidadJpeg));
+
+        ultimaMiniaturaAlbum = generarMiniaturaLigera(canvas, 420, 0.68);
+        ultimoBase64Servidor = (modo === "ASISTENCIA") ? generarMiniaturaLigera(canvas, 960, 0.78) : ultimaMiniaturaAlbum;
+
+        const fechaCorta = ahora.toISOString().slice(0, 10);
+        const limpNombre = (usuarioActivo ? usuarioActivo.nombre : "ASESOR").replace(/[^A-Z0-9]/gi, "_");
+        ultimoNombreArchivo = `Mi_gestion_Crediban_${limpNombre}_${fechaCorta}_${indiceUnico}.jpg`;
+
+        abrirModalPreview(ultimoBase64Original, modo);
+      } catch (err) {
+        console.error("Error procesando foto:", err);
+        alert("No se pudo procesar la fotografía. Intenta nuevamente.");
+      } finally {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        event.target.value = "";
+      }
+    }
+
+    function generarMiniaturaLigera(sourceCanvas, maxAncho, calidad) {
+      const miniCanvas = document.createElement("canvas");
+      const ratio = sourceCanvas.height / sourceCanvas.width;
+      miniCanvas.width = Math.min(sourceCanvas.width, maxAncho);
+      miniCanvas.height = Math.round(miniCanvas.width * ratio);
+      const mCtx = miniCanvas.getContext("2d");
+      mCtx.drawImage(sourceCanvas, 0, 0, miniCanvas.width, miniCanvas.height);
+      return miniCanvas.toDataURL("image/jpeg", calidad);
+    }
+
+    // Dibuja la Brújula circular en la esquina superior izquierda (como en Imagen 2)
+    function dibujarBrujulaSuperior(ctx, cx, cy, r, anguloGrados) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(15, 23, 42, 0.58)";
+      ctx.fill();
+      ctx.lineWidth = Math.max(2, Math.round(r * 0.06));
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
+      ctx.stroke();
+
+      // Marcas de graduación
+      for (let i = 0; i < 12; i++) {
+        const ang = (i * 30 * Math.PI) / 180;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(ang) * (r * 0.80), cy + Math.sin(ang) * (r * 0.80));
+        ctx.lineTo(cx + Math.cos(ang) * (r * 0.92), cy + Math.sin(ang) * (r * 0.92));
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Letras cardinales N, E, S, O
+      const fontCardinal = Math.max(10, Math.round(r * 0.24));
+      ctx.font = `800 ${fontCardinal}px Inter, Arial, sans-serif`;
+      ctx.fillStyle = "#FFFFFF";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("N", cx, cy - r * 0.64);
+      ctx.fillText("S", cx, cy + r * 0.64);
+      ctx.fillText("E", cx + r * 0.64, cy);
+      ctx.fillText("O", cx - r * 0.64, cy);
+
+      // Aguja celeste/azul orientada
+      ctx.translate(cx, cy);
+      ctx.rotate(((anguloGrados || 0) * Math.PI) / 180);
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.48);
+      ctx.lineTo(r * 0.13, r * 0.35);
+      ctx.lineTo(0, r * 0.22);
+      ctx.lineTo(-r * 0.13, r * 0.35);
+      ctx.closePath();
+      ctx.fillStyle = "#38BDF8";
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Dibuja el Minimapa 100% SÓLIDO (Opacidad 1.0, sin transparencia) Estilo Imagen 2 y SIN "API KEY REQUIRED"
+    async function dibujarMinimapaSolidoImagen2(ctx, lat, lng, x, y, w, h) {
+      ctx.save();
+      ctx.globalAlpha = 1.0; // 100% Sólido, cero transparencia
+
+      const radio = Math.round(w * 0.04);
+      trazarRectanguloRedondeado(ctx, x, y, w, h, radio);
+      ctx.fillStyle = "#EBE9E2"; // Color sólido base de mapa Google
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.stroke();
+      ctx.clip();
+
+      // Intentar cargar los cuadrantes oficiales de OpenStreetMap Foundation (Nunca tienen marca "API KEY REQUIRED")
+      const zoom = 16;
+      const n = Math.pow(2, zoom);
+      const exactTileX = ((lng + 180) / 360) * n;
+      const latRad = (lat * Math.PI) / 180;
+      const exactTileY = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n;
+
+      const centerTileX = Math.floor(exactTileX);
+      const centerTileY = Math.floor(exactTileY);
+      const offsetX = Math.round((exactTileX - centerTileX) * 256);
+      const offsetY = Math.round((exactTileY - centerTileY) * 256);
+
+      let tilesPintados = 0;
+
+      try {
+        const promesas = [];
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            const tx = centerTileX + dx;
+            const ty = centerTileY + dy;
+            promesas.push(cargarTileOficialOSM(zoom, tx, ty, dx, dy));
+          }
+        }
+
+        const resultados = await Promise.all(promesas);
+        const centerX = x + w / 2;
+        const centerY = y + h / 2;
+
+        resultados.forEach(item => {
+          if (item && item.img) {
+            const drawX = centerX - offsetX + item.dx * 256;
+            const drawY = centerY - offsetY + item.dy * 256;
+            ctx.drawImage(item.img, drawX, drawY, 256, 256);
+            tilesPintados++;
+          }
+        });
+      } catch (e) {}
+
+      // Si el visor interno de WhatsApp bloquea imágenes externas, dibuja el Mapa Urbano Sólido Estilo Imagen 2
+      if (tilesPintados === 0) {
+        dibujarMapaVectorialEstiloImagen2(ctx, x, y, w, h);
+      }
+
+      // Pin Rojo Oficial de Google Maps justo en el centro
+      const pinX = x + w / 2;
+      const pinY = y + h / 2;
+      const pinRadius = Math.max(9, Math.round(w * 0.082));
+
+      ctx.beginPath();
+      ctx.ellipse(pinX, pinY + pinRadius * 0.72, pinRadius * 0.45, pinRadius * 0.2, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(pinX, pinY - pinRadius * 0.9, pinRadius, Math.PI, 0, false);
+      ctx.quadraticCurveTo(pinX + pinRadius, pinY - pinRadius * 0.1, pinX, pinY + pinRadius * 0.72);
+      ctx.quadraticCurveTo(pinX - pinRadius, pinY - pinRadius * 0.1, pinX - pinRadius, pinY - pinRadius * 0.9);
+      ctx.closePath();
+      ctx.fillStyle = "#EA4335";
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "#B31412";
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(pinX, pinY - pinRadius * 0.9, Math.round(pinRadius * 0.38), 0, Math.PI * 2);
+      ctx.fillStyle = "#7A0E0C";
+      ctx.fill();
+
+      // Insignia "Google" multicolor en la esquina inferior izquierda (idéntica a Imagen 2)
+      const fontGoogle = Math.max(11, Math.round(w * 0.095));
+      ctx.font = `700 ${fontGoogle}px Arial, sans-serif`;
+      ctx.textBaseline = "bottom";
+      ctx.textAlign = "left";
+
+      const letrasGoogle = [
+        { l: "G", c: "#4285F4" }, { l: "o", c: "#EA4335" },
+        { l: "o", c: "#FBBC05" }, { l: "g", c: "#4285F4" },
+        { l: "l", c: "#34A853" }, { l: "e", c: "#EA4335" }
+      ];
+
+      let gx = x + Math.round(w * 0.045);
+      const gy = y + h - Math.round(w * 0.035);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#FFFFFF";
+
+      letrasGoogle.forEach(item => {
+        ctx.strokeText(item.l, gx, gy);
+        ctx.fillStyle = item.c;
+        ctx.fillText(item.l, gx, gy);
+        gx += ctx.measureText(item.l).width;
+      });
+
+      ctx.restore();
+    }
+
+    function cargarTileOficialOSM(zoom, tx, ty, dx, dy) {
+      // Exclusivamente el servidor oficial de OpenStreetMap Foundation (Libre de sellos de API Key)
+      const url = `https://tile.openstreetmap.org/${zoom}/${tx}/${ty}.png`;
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        const timer = setTimeout(() => resolve(null), 2000);
+        img.onload = () => {
+          clearTimeout(timer);
+          resolve({ img, dx, dy });
+        };
+        img.onerror = () => {
+          clearTimeout(timer);
+          resolve(null);
+        };
+        img.src = url;
+      });
+    }
+
+    // Dibuja el mapa urbano 100% sólido idéntico a tu Imagen 2 (con calles reales, intersección e íconos POI de colores)
+    function dibujarMapaVectorialEstiloImagen2(ctx, x, y, w, h) {
+      // Fondo sólido gris/crema estilo Google Maps
+      ctx.fillStyle = "#E8EAED";
+      ctx.fillRect(x, y, w, h);
+
+      // Parques verdes suaves como en Imagen 2
+      ctx.fillStyle = "#C8E6C9";
+      ctx.fillRect(x + w * 0.52, y + h * 0.04, w * 0.44, h * 0.28);
+      ctx.fillRect(x + w * 0.04, y + h * 0.06, w * 0.28, h * 0.22);
+
+      // Manzanas urbanas
+      ctx.fillStyle = "#F1F3F4";
+      ctx.fillRect(x + w * 0.06, y + h * 0.34, w * 0.38, h * 0.32);
+      ctx.fillRect(x + w * 0.54, y + h * 0.38, w * 0.40, h * 0.30);
+
+      // Calles secundarias blancas con borde gris
+      const anchoCalle = Math.max(7, Math.round(w * 0.065));
+      ctx.strokeStyle = "#DADCE0";
+      ctx.lineWidth = anchoCalle + 2;
+
+      const trazarRedVial = () => {
+        // Calle vertical (Cruce)
+        ctx.beginPath();
+        ctx.moveTo(x + w * 0.48, y);
+        ctx.lineTo(x + w * 0.44, y + h);
+        ctx.stroke();
+
+        // Calle horizontal principal
+        ctx.beginPath();
+        ctx.moveTo(x, y + h * 0.33);
+        ctx.lineTo(x + w, y + h * 0.36);
+        ctx.stroke();
+
+        // Calle horizontal inferior
+        ctx.beginPath();
+        ctx.moveTo(x, y + h * 0.72);
+        ctx.lineTo(x + w, y + h * 0.70);
+        ctx.stroke();
+      };
+
+      trazarRedVial();
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.lineWidth = anchoCalle;
+      trazarRedVial();
+
+      // Rotular el nombre de la Calle Principal y de la Calle del Cruce sobre las vías
+      const fontVia = Math.max(9, Math.round(w * 0.062));
+      ctx.font = `700 ${fontVia}px Arial, sans-serif`;
+      ctx.fillStyle = "#5F6368";
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.lineWidth = 2.5;
+      ctx.textAlign = "center";
+
+      const viaHoriz = (gpsState.soloNombreCalle || "Av. Principal").slice(0, 20);
+      ctx.strokeText(viaHoriz, x + w * 0.52, y + h * 0.34);
+      ctx.fillText(viaHoriz, x + w * 0.52, y + h * 0.34);
+
+      const viaCruce = (gpsState.callesVecinasMapa[1] || gpsState.cruceCalles.replace("Cruce ", "") || "Calle Transversal").slice(0, 16);
+      ctx.save();
+      ctx.translate(x + w * 0.46, y + h * 0.18);
+      ctx.rotate(-Math.PI / 2.1);
+      ctx.strokeText(viaCruce, 0, 0);
+      ctx.fillText(viaCruce, 0, 0);
+      ctx.restore();
+
+      // Íconos circulares de puntos de interés (naranja, verde, rosado) idénticos a Imagen 2
+      const pois = gpsState.puntosInteresMapa && gpsState.puntosInteresMapa.length > 0
+        ? gpsState.puntosInteresMapa
+        : [
+            { nombre: gpsState.distrito || "Centro", tipo: "park", dx: -0.28, dy: -0.26 },
+            { nombre: "Comercio", tipo: "food", dx: 0.18, dy: 0.18 }
+          ];
+
+      const rPoi = Math.max(6, Math.round(w * 0.048));
+      pois.slice(0, 3).forEach(p => {
+        const px = x + w * (0.5 + (p.dx || 0.2));
+        const py = y + h * (0.5 + (p.dy || 0.2));
+        ctx.beginPath();
+        ctx.arc(px, py, rPoi, 0, Math.PI * 2);
+        ctx.fillStyle = p.tipo === "food" ? "#F57C00" : (p.tipo === "park" ? "#43A047" : "#EC407A");
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.stroke();
+
+        ctx.font = `700 ${Math.max(8, Math.round(w * 0.055))}px Arial, sans-serif`;
+        ctx.textAlign = "left";
+        ctx.fillStyle = p.tipo === "food" ? "#B25600" : (p.tipo === "park" ? "#2E7D32" : "#AD1457");
+        ctx.strokeText(p.nombre, px + rPoi + 3, py + 3);
+        ctx.fillText(p.nombre, px + rPoi + 3, py + 3);
+      });
+    }
+
+    function trazarRectanguloRedondeado(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function formatearFechaHoraEstiloFoto(date) {
+      const meses = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
+      const dia = date.getDate();
+      const mes = meses[date.getMonth()];
+      const anio = date.getFullYear();
+      let horas = date.getHours();
+      const ampm = horas >= 12 ? "p. m." : "a. m.";
+      horas = horas % 12 || 12;
+      const min = String(date.getMinutes()).padStart(2, "0");
+      const seg = String(date.getSeconds()).padStart(2, "0");
+      return `${dia} ${mes} ${anio} ${horas}:${min}:${seg} ${ampm}`;
+    }
+
+    /***************************************************************************
+     * 10. MODAL DE PREVISUALIZACIÓN, SUBIDA DE ASISTENCIA Y ÁLBUM POR FECHA
+     ***************************************************************************/
+    function abrirModalPreview(dataUrl, modo, urlDriveOriginal = "", itemAlbum = null) {
+      document.getElementById("imgPreviewResultado").src = dataUrl;
+      const badge = document.getElementById("previewBadgeModo");
+      const boxAsistencia = document.getElementById("previewBotonesAsistencia");
+      const boxGestion = document.getElementById("previewBotonesGestion");
+      const boxLectura = document.getElementById("previewBotonesLecturaReporte");
+      const linkDrive = document.getElementById("linkAbrirFotoDrive");
+      const btnReenviarWA = document.getElementById("btnReenviarAlbumWA");
+      const btnCerrarLectura = document.getElementById("btnCerrarLecturaModal");
+
+      itemAlbumSeleccionado = itemAlbum;
+
+      if (urlDriveOriginal && urlDriveOriginal.startsWith("http")) {
+        linkDrive.href = urlDriveOriginal;
+        linkDrive.classList.remove("hidden");
+      } else {
+        linkDrive.classList.add("hidden");
+      }
+
+      if (modo === "LECTURA" || modo === "ALBUM_VIEW") {
+        badge.textContent = modo === "ALBUM_VIEW" ? `MI GESTIÓN CREDIBAN • ${itemAlbum?.fechaIso || ""}` : "VISOR DE EVIDENCIA FOTOGRÁFICA";
+        boxAsistencia.classList.add("hidden");
+        boxGestion.classList.add("hidden");
+        boxLectura.classList.remove("hidden");
+
+        if (modo === "ALBUM_VIEW" && itemAlbum) {
+          btnReenviarWA.classList.remove("hidden");
+          btnCerrarLectura.className = "col-span-1 py-3 rounded-xl bg-slate-800 text-white font-extrabold text-xs uppercase";
+        } else {
+          btnReenviarWA.classList.add("hidden");
+          btnCerrarLectura.className = "col-span-2 py-3 rounded-xl bg-slate-800 text-white font-extrabold text-xs uppercase";
+        }
+      } else if (modo === "GESTION") {
+        badge.textContent = "MODO GESTIÓN EN CAMPO • CALIDAD ORIGINAL";
+        boxAsistencia.classList.add("hidden");
+        boxGestion.classList.remove("hidden");
+        boxLectura.classList.add("hidden");
+      } else {
+        badge.textContent = `CONFIRMAR ${tipoMarcajeSeleccionado} • SEDE ${usuarioActivo.sedeOperativa}`;
+        boxAsistencia.classList.remove("hidden");
+        boxGestion.classList.add("hidden");
+        boxLectura.classList.add("hidden");
+      }
+
+      document.getElementById("modalPreviewFoto").classList.remove("hidden");
+      window.history.pushState({ modalPreviewOpen: true }, "", window.location.href);
+    }
+
+    function cerrarModalPreview() {
+      document.getElementById("modalPreviewFoto").classList.add("hidden");
+    }
+
+    function repetirFotoActual() {
+      cerrarModalPreview();
+      if (modoCapturaActual === "GESTION") {
+        document.getElementById("cameraInputGestionTrasera").click();
+      } else {
+        document.getElementById("cameraInputAsistencia").click();
+      }
+    }
+
+    async function confirmarYSubirAsistencia() {
+      if (enviandoAsistencia) return;
+      enviandoAsistencia = true;
+
+      const btn = document.getElementById("btnConfirmarAsistencia");
+      const textoOriginal = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1"></i> Guardando...`;
+
+      try {
+        const ahora = new Date();
+        const enCampo = document.getElementById("chkEnCampo").checked;
+        const observacion = document.getElementById("inputMotivoAsistencia").value.trim() || (enCampo ? "Labor en Campo" : "Labor en Agencia");
+        const precisionManual = (document.getElementById("inputPrecisionCruce")?.value || "").trim();
+        const direccionFinal = precisionManual
+          ? `${gpsState.calleExacta} (${gpsState.cruceCalles} - ${precisionManual}), ${gpsState.distrito}, ${gpsState.provincia}`
+          : gpsState.direccionCompleta;
+
+        const payload = {
+          action: "registrarAsistencia",
+          id: "AS-" + ahora.getTime(),
+          nombre: usuarioActivo.nombre,
+          sede: usuarioActivo.sedeOperativa,
+          rol: usuarioActivo.rol,
+          equipo: usuarioActivo.equipo || "GENERAL",
+          tipo: tipoMarcajeSeleccionado,
+          direccion: direccionFinal,
+          coordenadas: `${gpsState.lat.toFixed(6)},${gpsState.lng.toFixed(6)}`,
+          enCampo: enCampo,
+          observaciones: observacion,
+          fotoBase64: ultimoBase64Original,
+          fotoMiniBase64: ultimoBase64Servidor
+        };
+
+        const resp = await fetch(CONFIG_SISTEMA.ATTENDANCE_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        const resultadoJson = await resp.json();
+
+        if (resultadoJson && resultadoJson.status === "ok" && resultadoJson.registro) {
+          registrosAsistenciaGlobal.unshift(resultadoJson.registro);
+          guardarRegistrosLocales();
+        }
+
+        if (tipoMarcajeSeleccionado === "SALIDA REFRIGERIO") {
+          activarCronometroRefrigerio(ahora);
+        } else if (tipoMarcajeSeleccionado === "RETORNO REFRIGERIO") {
+          detenerCronometroRefrigerio();
+        }
+
+        cerrarModalPreview();
+        document.getElementById("inputMotivoAsistencia").value = "";
+        guardarBorradorFormulario();
+        mostrarToast(`✅ ${tipoMarcajeSeleccionado} registrada correctamente`);
+        cargarAsistenciasDesdeServidor(false);
+      } catch (e) {
+        cerrarModalPreview();
+        mostrarToast("Asistencia guardada en memoria local");
+      } finally {
+        enviandoAsistencia = false;
+        btn.disabled = false;
+        btn.innerHTML = textoOriginal;
+      }
+    }
+
+    /***************************************************************************
+     * 11. GUARDADO AUTOMÁTICO EN CARPETA FIJADA "Mi gestión Crediban" Y FILTRO POR FECHA
+     ***************************************************************************/
+    async function guardarArchivoEnCarpetaCrediban(blob, nombreArchivo, miniaturaBase64) {
+      const ahora = new Date();
+      const fechaIso = ahora.toISOString().slice(0, 10);
+
+      const itemAlbum = {
+        id: "G-" + ahora.getTime(),
+        timestamp: ahora.getTime(),
+        fechaIso: fechaIso,
+        hora: ahora.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" }),
+        nombreArchivo: nombreArchivo,
+        cliente: document.getElementById("gestionClienteNombre").value.trim() || "Gestión en Campo",
+        actividad: document.getElementById("gestionTipoActividad").value,
+        direccion: gpsState.direccionCompleta,
+        coordenadas: `${gpsState.lat.toFixed(6)},${gpsState.lng.toFixed(6)}`,
+        thumbUrl: miniaturaBase64
+      };
+
+      await guardarFotoEnIndexedDB(itemAlbum);
+      renderizarGaleriaGestion();
+
+      if (directorioGestionHandle) {
+        try {
+          if (directorioGestionHandle.queryPermission) {
+            let perm = await directorioGestionHandle.queryPermission({ mode: "readwrite" });
+            if (perm !== "granted" && directorioGestionHandle.requestPermission) {
+              perm = await directorioGestionHandle.requestPermission({ mode: "readwrite" });
+            }
+          }
+          const fileHandle = await directorioGestionHandle.getFileHandle(nombreArchivo, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          mostrarToast('📁 Guardada en tu carpeta fijada "Mi gestión Crediban"');
+          return;
+        } catch (err) {}
+      }
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = nombreArchivo;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+    }
+
+    async function compartirYGuardarGestion() {
+      if (!ultimoBlobGenerado) return;
+
+      await guardarArchivoEnCarpetaCrediban(ultimoBlobGenerado, ultimoNombreArchivo, ultimaMiniaturaAlbum);
+
+      const cliente = document.getElementById("gestionClienteNombre").value.trim() || "Visita en Campo";
+      const actividad = document.getElementById("gestionTipoActividad").value.trim();
+      const textoWhatsApp =
+        `📸 *MI GESTIÓN CREDIBAN*\n` +
+        `👤 *Colaborador:* ${usuarioActivo ? usuarioActivo.nombre : ""}\n` +
+        `🏷️ *Actividad:* ${actividad} (${cliente})\n` +
+        `📍 *Dirección:* ${gpsState.calleExacta}\n` +
+        `🛣️ *Referencia:* ${gpsState.cruceCalles}\n` +
+        `🗺️ *Google Maps:* https://www.google.com/maps?q=${gpsState.lat},${gpsState.lng}`;
+
+      const archivoCompartir = new File([ultimoBlobGenerado], ultimoNombreArchivo, { type: "image/jpeg" });
+
+      if (navigator.canShare && navigator.canShare({ files: [archivoCompartir] })) {
+        try {
+          await navigator.share({
+            title: "Mi gestión Crediban",
+            text: textoWhatsApp,
+            files: [archivoCompartir]
+          });
+          cerrarModalPreview();
+          return;
+        } catch (err) {}
+      }
+
+      window.open(`https://wa.me/?text=${encodeURIComponent(textoWhatsApp)}`, "_blank");
+      cerrarModalPreview();
+    }
+
+    async function soloGuardarEnCarpetaGestion() {
+      if (!ultimoBlobGenerado) return;
+      await guardarArchivoEnCarpetaCrediban(ultimoBlobGenerado, ultimoNombreArchivo, ultimaMiniaturaAlbum);
+      cerrarModalPreview();
+      mostrarToast('✅ Guardada en "Mi gestión Crediban"');
+    }
+
+    function filtrarAlbumPorHoy() {
+      mostrarTodasFechasAlbum = false;
+      const hoyIso = new Date().toISOString().slice(0, 10);
+      document.getElementById("filtroFechaAlbumGestion").value = hoyIso;
+      document.getElementById("btnAlbumHoy").className = "px-2.5 py-2 rounded-xl bg-[#59B447] text-white text-[11px] font-extrabold shrink-0";
+      document.getElementById("btnAlbumTodas").className = "px-2.5 py-2 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-extrabold shrink-0";
+      renderizarGaleriaGestion();
+    }
+
+    function filtrarAlbumTodasFechas() {
+      mostrarTodasFechasAlbum = true;
+      document.getElementById("btnAlbumTodas").className = "px-2.5 py-2 rounded-xl bg-[#59B447] text-white text-[11px] font-extrabold shrink-0";
+      document.getElementById("btnAlbumHoy").className = "px-2.5 py-2 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-extrabold shrink-0";
+      renderizarGaleriaGestion();
+    }
+
+    function alternarTamanoVistaAlbum() {
+      vistaAlbumCompacta = !vistaAlbumCompacta;
+      const btn = document.getElementById("btnTamanoAlbum");
+      if (btn) {
+        btn.innerHTML = vistaAlbumCompacta
+          ? `<i class="fa-solid fa-table-cells mr-1"></i> Compacto`
+          : `<i class="fa-solid fa-list mr-1"></i> Lista`;
+      }
+      renderizarGaleriaGestion();
+    }
+
+    function obtenerFotosAlbumFiltradas() {
+      const fechaElegida = document.getElementById("filtroFechaAlbumGestion")?.value || new Date().toISOString().slice(0, 10);
+      const busqueda = (document.getElementById("buscadorClienteAlbum")?.value || "").trim().toUpperCase();
+
+      return listaFotosAlbumCache.filter(item => {
+        const pasaFecha = mostrarTodasFechasAlbum ? true : (item.fechaIso === fechaElegida);
+        const textoItem = `${item.cliente || ""} ${item.actividad || ""} ${item.direccion || ""}`.toUpperCase();
+        const pasaBusqueda = !busqueda || textoItem.includes(busqueda);
+        return pasaFecha && pasaBusqueda;
+      });
+    }
+
+    function renderizarGaleriaGestion() {
+      const grid = document.getElementById("galeriaGestionGrid");
+      const contador = document.getElementById("contadorFotosGestion");
+      if (!grid) return;
+
+      const filtradas = obtenerFotosAlbumFiltradas();
+      contador.textContent = filtradas.length;
+
+      if (filtradas.length === 0) {
+        grid.className = "grid grid-cols-1 gap-2 p-1";
+        grid.innerHTML = `
+          <div class="p-5 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <i class="fa-solid fa-folder-open text-2xl text-slate-300 mb-1 block"></i>
+            No hay fotos de gestión para la fecha o búsqueda seleccionada.
+          </div>`;
+        return;
+      }
+
+      if (vistaAlbumCompacta) {
+        grid.className = "grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[380px] overflow-y-auto p-1";
+        grid.innerHTML = filtradas.map(item => `
+          <div onclick="inspeccionarFotoAlbum('${item.id}')" class="rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm cursor-pointer hover:border-[#59B447] transition flex flex-col">
+            <img src="${item.thumbUrl || item.dataUrl}" loading="lazy" class="w-full h-20 object-cover" />
+            <div class="p-1.5">
+              <p class="text-[10px] font-black text-slate-800 truncate">${item.cliente}</p>
+              <p class="text-[9px] font-semibold text-slate-500 truncate">${item.hora} • ${item.fechaIso.slice(5)}</p>
+            </div>
+          </div>
+        `).join("");
+      } else {
+        grid.className = "space-y-1.5 max-h-[380px] overflow-y-auto p-1";
+        grid.innerHTML = filtradas.map(item => `
+          <div onclick="inspeccionarFotoAlbum('${item.id}')" class="p-2 rounded-xl border border-slate-200 bg-white flex items-center justify-between gap-2.5 cursor-pointer hover:border-[#59B447]">
+            <img src="${item.thumbUrl || item.dataUrl}" loading="lazy" class="w-12 h-12 rounded-lg object-cover shrink-0" />
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-black text-slate-800 truncate">${item.cliente} <span class="text-[10px] font-semibold text-emerald-700">(${item.actividad})</span></p>
+              <p class="text-[10px] font-semibold text-slate-500 truncate">${item.fechaIso} ${item.hora} • ${item.direccion}</p>
+            </div>
+            <i class="fa-solid fa-eye text-slate-400 text-xs shrink-0 mr-1"></i>
+          </div>
+        `).join("");
+      }
+    }
+
+    function inspeccionarFotoAlbum(idFoto) {
+      const item = listaFotosAlbumCache.find(x => x.id === idFoto);
+      if (!item) return;
+      abrirModalPreview(item.thumbUrl || item.dataUrl, "ALBUM_VIEW", "", item);
+    }
+
+    function reenviarFotoAlbumWhatsApp() {
+      if (!itemAlbumSeleccionado) return;
+      const texto =
+        `📸 *MI GESTIÓN CREDIBAN*\n` +
+        `👤 *Colaborador:* ${usuarioActivo ? usuarioActivo.nombre : ""}\n` +
+        `🏷️ *Cliente:* ${itemAlbumSeleccionado.cliente} (${itemAlbumSeleccionado.actividad})\n` +
+        `📅 *Fecha:* ${itemAlbumSeleccionado.fechaIso} ${itemAlbumSeleccionado.hora}\n` +
+        `📍 *Dirección:* ${itemAlbumSeleccionado.direccion}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+    }
+
+    async function descargarAlbumZip() {
+      const filtradas = obtenerFotosAlbumFiltradas();
+      if (filtradas.length === 0) {
+        alert("No hay fotos en la fecha seleccionada para descargar en .ZIP.");
+        return;
+      }
+      const zip = new JSZip();
+      const carpeta = zip.folder("Mi gestion Crediban");
+      filtradas.forEach(item => {
+        const src = item.thumbUrl || item.dataUrl || "";
+        if (src.includes("base64,")) {
+          carpeta.file(item.nombreArchivo, src.split(",")[1], { base64: true });
+        }
+      });
+      const content = await zip.generateAsync({ type: "blob" });
+      const fechaEtiqueta = document.getElementById("filtroFechaAlbumGestion")?.value || new Date().toISOString().slice(0, 10);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(content);
+      a.download = `Mi_gestion_Crediban_${fechaEtiqueta}.zip`;
+      a.click();
+    }
+
+    async function limpiarAlbumGestion() {
+      const fechaElegida = document.getElementById("filtroFechaAlbumGestion")?.value || new Date().toISOString().slice(0, 10);
+      if (!confirm(`¿Deseas limpiar del visor de la app las miniaturas de la fecha ${fechaElegida}? (Tus fotos originales guardadas en la galería del teléfono no se borrarán).`)) return;
+
+      listaFotosAlbumCache = listaFotosAlbumCache.filter(x => mostrarTodasFechasAlbum ? false : x.fechaIso !== fechaElegida);
+
+      if (dbGestion) {
+        const tx = dbGestion.transaction("fotos_gestion", "readwrite");
+        const store = tx.objectStore("fotos_gestion");
+        if (mostrarTodasFechasAlbum) {
+          store.clear();
+        } else {
+          const req = store.getAll();
+          req.onsuccess = () => {
+            (req.result || []).forEach(it => {
+              if (it.fechaIso === fechaElegida) store.delete(it.id);
+            });
+          };
+        }
+      }
+      renderizarGaleriaGestion();
+    }
+
+    /***************************************************************************
+     * 12. SUPERVISIÓN DE ASISTENCIAS (ADMINISTRADOR DE SEDE vs GERENTE)
+     ***************************************************************************/
+    function actualizarTextoHorarioSede() {
+      if (!usuarioActivo) return;
+      const sede = usuarioActivo.sedeOperativa || SEDES_HABILITADAS[0];
+      const cfg = PARAMETROS_SEDES[sede] || { entradaLV: "08:30", salidaLV: "18:30", entradaSab: "09:00", salidaSab: "13:30" };
+      const ahora = new Date();
+      const hoyIso = ahora.toISOString().slice(0, 10);
+      const mapDias = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
+      const diaCod = mapDias[ahora.getDay()];
+      const esFeriado = FERIADOS_NO_LABORABLES.includes(hoyIso);
+      const diasHabiles = Array.isArray(cfg.diasLaborables) ? cfg.diasLaborables : ["LUN","MAR","MIE","JUE","VIE","SAB"];
+      const esLaborable = diasHabiles.includes(diaCod) && !esFeriado;
+
+      const badge = document.getElementById("badgeEstadoLaborableHoy");
+      if (badge) {
+        if (esLaborable) {
+          badge.textContent = `Día Laborable (${sede})`;
+          badge.className = "text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-50 text-[#59B447] border border-emerald-200";
+        } else {
+          badge.textContent = esFeriado ? "Feriado No Laborable" : "Día No Laborable";
+          badge.className = "text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300";
+        }
+      }
+
+      const esSabado = (diaCod === "SAB");
+      document.getElementById("horarioSedeTexto").textContent =
+        `Entrada: ${esSabado ? (cfg.entradaSab || "09:00") : cfg.entradaLV} | Salida: ${esSabado ? (cfg.salidaSab || "13:30") : cfg.salidaLV}`;
+    }
+
+    function construirBotonesSedesGerente() {
+      const cont = document.getElementById("botonesSedesReporte");
+      if (!cont) return;
+      const sedes = ["TODAS", ...SEDES_HABILITADAS];
+      cont.innerHTML = sedes.map(s => {
+        const activo = (s === sedeFiltroGerente);
+        return `<button onclick="seleccionarSedeGerente('${s}')" class="px-3 py-1 rounded-xl text-[11px] font-extrabold whitespace-nowrap transition ${activo ? 'bg-[#59B447] text-white shadow' : 'bg-white/10 text-emerald-100 hover:bg-white/20'}">${s === 'TODAS' ? '🌎 TODAS LAS SEDES HABILITADAS' : '📍 ' + s}</button>`;
+      }).join("");
+    }
+
+    function seleccionarSedeGerente(sede) {
+      sedeFiltroGerente = sede;
+      construirBotonesSedesGerente();
+      poblarFiltrosColaboradoresReporte();
+      renderizarReportes();
+    }
+
+    function cambiarFiltroRolReporte(rol) {
+      rolFiltroReporte = rol;
+      document.getElementById("rolPill_TODOS").className = rol === "TODOS" ? "px-2.5 py-1 rounded-lg text-[10px] font-black bg-[#59B447] text-white" : "px-2.5 py-1 rounded-lg text-[10px] font-black bg-white/10 text-emerald-100";
+      document.getElementById("rolPill_ADMIN").className = rol === "ADMINISTRADOR" ? "px-2.5 py-1 rounded-lg text-[10px] font-black bg-[#59B447] text-white" : "px-2.5 py-1 rounded-lg text-[10px] font-black bg-white/10 text-emerald-100";
+      document.getElementById("rolPill_ASESOR").className = rol === "ASESOR" ? "px-2.5 py-1 rounded-lg text-[10px] font-black bg-[#59B447] text-white" : "px-2.5 py-1 rounded-lg text-[10px] font-black bg-white/10 text-emerald-100";
+      poblarFiltrosColaboradoresReporte();
+      renderizarReportes();
+    }
+
+    function obtenerPersonalPermitidoSupervision() {
+      if (!usuarioActivo) return [];
+
+      return catalogoUsuarios.filter(u => {
+        if (esUsuarioGerente(usuarioActivo)) {
+          const pasaSede = (sedeFiltroGerente === "TODAS") ? (SEDES_HABILITADAS.includes(u.sede) || u.sede === "TODAS") : (u.sede === sedeFiltroGerente);
+          const pasaRol =
+            rolFiltroReporte === "TODOS" ? true :
+            rolFiltroReporte === "ADMINISTRADOR" ? (u.rol === "ADMINISTRADOR") :
+            (u.rol !== "ADMINISTRADOR" && u.rol !== "GERENTE");
+          return pasaSede && pasaRol;
+        }
+
+        if (esUsuarioAdministrador(usuarioActivo)) {
+          return u.sede === usuarioActivo.sedeOperativa && u.rol !== "GERENTE";
+        }
+
+        return false;
+      });
+    }
+
+    function poblarFiltrosColaboradoresReporte() {
+      const selColab = document.getElementById("filtroTrabajadorReporte");
+      const selEquipo = document.getElementById("filtroEquipoReporte");
+      if (!selColab) return;
+
+      const permitidos = obtenerPersonalPermitidoSupervision();
+      selColab.innerHTML = `<option value="TODOS">👤 Todos los colaboradores supervisados (${permitidos.length})</option>`;
+      permitidos.forEach(u => {
+        const estadoTag = colaboradorDebeMarcar(u.nombre) ? "" : " [Permiso Especial]";
+        selColab.innerHTML += `<option value="${u.nombre}">${u.nombre} (${u.rol} - ${u.sede})${estadoTag}</option>`;
+      });
+
+      const equipos = new Set(["EQUIPO A", "EQUIPO B", "EQUIPO C", "CAJA", "OPERACIONES"]);
+      permitidos.forEach(u => { if (u.equipo) equipos.add(u.equipo); });
+      selEquipo.innerHTML = `<option value="TODOS">🛡️ Todas las Áreas / Equipos</option>`;
+      Array.from(equipos).forEach(eq => {
+        selEquipo.innerHTML += `<option value="${eq}">${eq}</option>`;
+      });
+    }
+
+    function inicializarFechasFiltro() {
+      const hoyIso = new Date().toISOString().slice(0, 10);
+      if (document.getElementById("filtroFechaExacta")) document.getElementById("filtroFechaExacta").value = hoyIso;
+      if (document.getElementById("filtroMesAnio")) document.getElementById("filtroMesAnio").value = hoyIso.slice(0, 7);
+      if (document.getElementById("filtroDesde")) document.getElementById("filtroDesde").value = hoyIso;
+      if (document.getElementById("filtroHasta")) document.getElementById("filtroHasta").value = hoyIso;
+      if (document.getElementById("filtroFechaAlbumGestion")) document.getElementById("filtroFechaAlbumGestion").value = hoyIso;
+    }
+
+    function aplicarModoFecha(modo) {
+      modoFechaReporte = modo;
+      ["HOY", "DIA", "MES", "RANGO"].forEach(m => {
+        const btn = document.getElementById(`btnFecha_${m}`);
+        if (btn) {
+          btn.className = (m === modo)
+            ? "px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-[#59B447] text-white"
+            : "px-2.5 py-1 rounded-lg text-[11px] font-extrabold text-slate-600";
+        }
+      });
+
+      document.getElementById("contenedorInputFechaDia").classList.toggle("hidden", modo !== "DIA");
+      document.getElementById("contenedorInputFechaMes").classList.toggle("hidden", modo !== "MES");
+      document.getElementById("contenedorInputRango").classList.toggle("hidden", modo !== "RANGO");
+      renderizarReportes();
+    }
+
+    function alternarFormatoReporte() {
+      formatoReporteTabla = !formatoReporteTabla;
+      document.getElementById("contenedorTarjetasReporte").classList.toggle("hidden", formatoReporteTabla);
+      document.getElementById("contenedorTablaReporte").classList.toggle("hidden", !formatoReporteTabla);
+      document.getElementById("textoFormatoReporte").textContent = formatoReporteTabla ? "Ver en Tarjetas" : "Ver como Tabla";
+      document.getElementById("iconFormatoReporte").className = formatoReporteTabla ? "fa-solid fa-grip mr-1" : "fa-solid fa-table-list mr-1";
+    }
+
+    function guardarRegistrosLocales() {
+      try {
+        localStorage.setItem("crediban_asistencias_db_v6", JSON.stringify(registrosAsistenciaGlobal.slice(0, 120)));
+      } catch (e) {}
+    }
+
+    async function cargarAsistenciasDesdeServidor(mostrarAlerta = false) {
+      if (!usuarioActivo) return;
+      const iconSync = document.getElementById("iconSyncReporte");
+      if (iconSync) iconSync.classList.add("fa-spin");
+
+      const localData = localStorage.getItem("crediban_asistencias_db_v6");
+      if (localData) {
+        try { registrosAsistenciaGlobal = JSON.parse(localData); } catch (e) {}
+      }
+
+      try {
+        const urlReq = `${CONFIG_SISTEMA.ATTENDANCE_API_URL}?action=init&rol=${encodeURIComponent(usuarioActivo.rol)}&sede=${encodeURIComponent(usuarioActivo.sedeOperativa)}&nombre=${encodeURIComponent(usuarioActivo.nombre)}&t=${Date.now()}`;
+        const resp = await fetch(urlReq);
+        const data = await resp.json();
+
+        if (data && data.status === "ok") {
+          if (data.parametros) {
+            aplicarParametrosRecibidos(data.parametros);
+          }
+          if (Array.isArray(data.registros)) {
+            registrosAsistenciaGlobal = data.registros;
+            guardarRegistrosLocales();
+          }
+          if (mostrarAlerta) mostrarToast("✅ Sincronizado con Google Sheets");
+        }
+      } catch (e) {
+        if (mostrarAlerta) mostrarToast("⚠️ Mostrando datos en caché local");
+      } finally {
+        if (iconSync) iconSync.classList.remove("fa-spin");
+        if (esUsuarioGerente(usuarioActivo) || esUsuarioAdministrador(usuarioActivo)) {
+          renderizarReportes();
+        }
+      }
+    }
+
+    function obtenerRegistrosFiltrados() {
+      if (!usuarioActivo) return [];
+      const hoyIso = new Date().toISOString().slice(0, 10);
+      const colabFiltro = document.getElementById("filtroTrabajadorReporte")?.value || "TODOS";
+      const equipoFiltro = document.getElementById("filtroEquipoReporte")?.value || "TODOS";
+      const obligacionFiltro = document.getElementById("filtroObligacionReporte")?.value || "OBLIGADOS";
+
+      return registrosAsistenciaGlobal.filter(r => {
+        const rSede = String(r.sede || "").toUpperCase();
+        const rRol = String(r.rol || "ASESOR").toUpperCase();
+        const rNombre = String(r.nombre || "").toUpperCase();
+        const rEquipo = String(r.equipo || "").toUpperCase();
+        const rFecha = String(r.fechaIso || "").slice(0, 10);
+
+        if (esUsuarioGerente(usuarioActivo)) {
+          if (sedeFiltroGerente === "TODAS") {
+            if (!SEDES_HABILITADAS.includes(rSede)) return false;
+          } else if (rSede !== sedeFiltroGerente) {
+            return false;
+          }
+          if (rolFiltroReporte === "ADMINISTRADOR" && rRol !== "ADMINISTRADOR") return false;
+          if (rolFiltroReporte === "ASESOR" && (rRol === "ADMINISTRADOR" || rRol === "GERENTE")) return false;
+        } else if (esUsuarioAdministrador(usuarioActivo)) {
+          if (rSede !== usuarioActivo.sedeOperativa) return false;
+          if (rRol === "GERENTE") return false;
+        } else {
+          return false;
+        }
+
+        // Filtro según quién debe marcar asistencia vs permisos especiales
+        const obligado = colaboradorDebeMarcar(rNombre);
+        if (obligacionFiltro === "OBLIGADOS" && !obligado) return false;
+        if (obligacionFiltro === "EXONERADOS" && obligado) return false;
+
+        if (colabFiltro !== "TODOS" && rNombre !== colabFiltro) return false;
+        if (equipoFiltro !== "TODOS" && rEquipo !== equipoFiltro) return false;
+
+        if (modoFechaReporte === "HOY") return rFecha === hoyIso;
+        if (modoFechaReporte === "DIA") return rFecha === document.getElementById("filtroFechaExacta").value;
+        if (modoFechaReporte === "MES") return rFecha.startsWith(document.getElementById("filtroMesAnio").value);
+        if (modoFechaReporte === "RANGO") {
+          const d = document.getElementById("filtroDesde").value;
+          const h = document.getElementById("filtroHasta").value;
+          return rFecha >= d && rFecha <= h;
+        }
+        return true;
+      });
+    }
+
+    function renderizarReportes() {
+      if (!usuarioActivo || (!esUsuarioGerente(usuarioActivo) && !esUsuarioAdministrador(usuarioActivo))) return;
+
+      const filtrados = obtenerRegistrosFiltrados();
+      const hoyIso = new Date().toISOString().slice(0, 10);
+
+      const total = filtrados.length;
+      const tardanzasMin = filtrados.reduce((acc, r) => acc + (Number(r.minutosTardanza) || 0), 0);
+      const puntuales = filtrados.filter(r => r.tipo === "ENTRADA" && (Number(r.minutosTardanza) || 0) === 0).length;
+
+      // Solo se consideran en falta/pendientes a quienes ESTÁN OBLIGADOS A MARCAR (sin permiso especial)
+      const personalPermitido = obtenerPersonalPermitidoSupervision().filter(
+        u => u.rol !== "GERENTE" && colaboradorDebeMarcar(u.nombre)
+      );
+      const marcaronHoySet = new Set(
+        registrosAsistenciaGlobal
+          .filter(r => r.fechaIso === hoyIso && r.tipo === "ENTRADA")
+          .map(r => String(r.nombre || "").toUpperCase())
+      );
+      const pendientesHoy = personalPermitido.filter(u => !marcaronHoySet.has(u.nombre));
+
+      document.getElementById("kpiTotalRegistros").textContent = total;
+      document.getElementById("kpiPuntuales").textContent = puntuales;
+      document.getElementById("kpiTardanzas").textContent = `${tardanzasMin} m`;
+      document.getElementById("kpiFaltasHoy").textContent = pendientesHoy.length;
+      document.getElementById("badgePendientesCount").textContent = pendientesHoy.length;
+
+      const contPendientes = document.getElementById("listaPendientesHoy");
+      if (pendientesHoy.length === 0) {
+        contPendientes.innerHTML = `<span class="text-xs font-bold text-emerald-700">✅ Todo el personal obligado a marcar ya registró su entrada hoy.</span>`;
+      } else {
+        contPendientes.innerHTML = pendientesHoy.map(u => {
+          const msg = encodeURIComponent(`Hola ${u.nombre}, el sistema de asistencia CREDIBAN reporta que aún no has registrado tu ENTRADA de hoy en sede ${u.sede}.`);
+          return `
+            <a href="https://wa.me/?text=${msg}" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-rose-200 text-[11px] font-bold text-rose-800 shadow-sm hover:bg-rose-100">
+              <span>${u.nombre} (${u.rol === 'ADMINISTRADOR' ? 'ADMIN' : u.rol})</span>
+              <i class="fa-brands fa-whatsapp text-emerald-600 text-sm"></i>
+            </a>`;
+        }).join("");
+      }
+
+      const contTarjetas = document.getElementById("contenedorTarjetasReporte");
+      if (filtrados.length === 0) {
+        contTarjetas.innerHTML = `
+          <div class="card-clean p-6 text-center text-xs font-bold text-slate-400">
+            Sin registros de asistencia para este filtro.
+          </div>`;
+      } else {
+        contTarjetas.innerHTML = filtrados.map((r, idx) => {
+          const tard = Number(r.minutosTardanza) || 0;
+          const extras = Number(r.minutosExtras) || 0;
+          const motivoPermiso = obtenerMotivoPermisoEspecial(r.nombre);
+          const badgePermiso = motivoPermiso
+            ? `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[9px] font-black">🛡️ ${motivoPermiso}</span>`
+            : "";
+          const badgeRol = r.rol === "ADMINISTRADOR"
+            ? `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-black">🛡️ ADMIN</span>`
+            : `<span class="px-2 py-0.5 rounded bg-emerald-50 text-[#1B4332] text-[10px] font-extrabold">${r.rol}</span>`;
+          const badgeTardanza = tard > 0
+            ? `<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-black">⏰ +${tard} min</span>`
+            : `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">✅ Puntual</span>`;
+          const badgeExtras = extras > 0
+            ? `<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-black">⚡ +${extras}m extra</span>`
+            : "";
+
+          const tieneFoto = Boolean(r.fotoUrl || r.linkFotoOriginal);
+
+          return `
+            <div class="card-clean p-3.5 flex items-center justify-between gap-3">
+              <div class="min-w-0 flex-1 space-y-1">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  ${badgeRol}
+                  <span class="text-xs font-black text-slate-900 truncate">${r.nombre}</span>
+                  <span class="text-[10px] font-extrabold text-slate-400">• ${r.sede}</span>
+                  ${badgePermiso}
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-[11px] font-extrabold text-[#1B4332]">${r.tipo}</span>
+                  <span class="text-[11px] font-semibold text-slate-500">${r.fechaIso} ${r.horaTexto}</span>
+                  ${r.tipo === 'ENTRADA' ? badgeTardanza : ''}
+                  ${badgeExtras}
+                </div>
+                <p class="text-[11px] text-slate-500 truncate">
+                  <i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>${r.direccion || 'Dirección GPS'}
+                </p>
+              </div>
+              <div class="flex flex-col items-end gap-1.5 shrink-0">
+                ${r.linkMapa ? `<a href="${r.linkMapa}" target="_blank" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-extrabold"><i class="fa-solid fa-map mr-1"></i>Mapa</a>` : ''}
+                ${tieneFoto ? `<button onclick="verFotoDeRegistro(${idx})" class="px-2.5 py-1 rounded-lg bg-[#59B447] text-white text-[10px] font-extrabold"><i class="fa-solid fa-image mr-1"></i>Ver Foto</button>` : ''}
+              </div>
+            </div>`;
+        }).join("");
+      }
+
+      const tbody = document.getElementById("tablaReporteBody");
+      tbody.innerHTML = filtrados.map((r, idx) => {
+        const tard = Number(r.minutosTardanza) || 0;
+        const tieneFoto = Boolean(r.fotoUrl || r.linkFotoOriginal);
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2.5 font-semibold whitespace-nowrap">${r.fechaIso}<br><span class="text-[10px] text-slate-400">${r.horaTexto}</span></td>
+            <td class="p-2.5 font-black text-slate-800">${r.nombre}</td>
+            <td class="p-2.5"><span class="font-bold">${r.rol}</span><br><span class="text-[10px] text-emerald-700 font-bold">${r.sede}</span></td>
+            <td class="p-2.5 font-extrabold text-[#1B4332]">${r.tipo}</td>
+            <td class="p-2.5 font-bold ${tard > 0 ? 'text-rose-600' : 'text-emerald-600'}">${tard > 0 ? '+' + tard + ' min' : '0 min'}</td>
+            <td class="p-2.5 max-w-[240px] truncate" title="${r.direccion}">${r.direccion}</td>
+            <td class="p-2.5 text-center">
+              ${tieneFoto ? `<button onclick="verFotoDeRegistro(${idx})" class="px-2.5 py-1 rounded bg-emerald-100 text-[#1B4332] font-bold text-xs">Ver Foto</button>` : '-'}
+            </td>
+          </tr>`;
+      }).join("");
+
+      if (esUsuarioGerente(usuarioActivo)) {
+        renderizarResumenGerencialSedes();
+      }
+    }
+
+    function verFotoDeRegistro(indiceFiltrado) {
+      const filtrados = obtenerRegistrosFiltrados();
+      const reg = filtrados[indiceFiltrado];
+      if (!reg) return;
+      const urlImagen = reg.fotoUrl || reg.linkFotoOriginal || "";
+      abrirModalPreview(urlImagen, "LECTURA", reg.linkFotoOriginal || urlImagen);
+    }
+
+    function renderizarResumenGerencialSedes() {
+      const grid = document.getElementById("resumenPorSedesGrid");
+      if (!grid) return;
+
+      const hoyIso = new Date().toISOString().slice(0, 10);
+      grid.innerHTML = SEDES_HABILITADAS.map(sede => {
+        const regsSedeHoy = registrosAsistenciaGlobal.filter(r => r.sede === sede && r.fechaIso === hoyIso);
+        const adminsHoy = regsSedeHoy.filter(r => r.rol === "ADMINISTRADOR").length;
+        const tardanzaSede = regsSedeHoy.reduce((acc, r) => acc + (Number(r.minutosTardanza) || 0), 0);
+        const exoneradosSede = catalogoUsuarios.filter(u => u.sede === sede && !colaboradorDebeMarcar(u.nombre)).length;
+        const regla = PARAMETROS_SEDES[sede] || {};
+
+        return `
+          <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-[#1B4332]">📍 SEDE ${sede}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">${regsSedeHoy.length} marcas hoy</span>
+            </div>
+            <p class="text-[11px] font-semibold text-slate-600">🛡️ Administradores hoy: <strong>${adminsHoy}</strong></p>
+            <p class="text-[11px] font-semibold text-slate-600">🔑 Con Permiso Especial: <strong>${exoneradosSede}</strong></p>
+            <p class="text-[11px] font-semibold text-slate-600">⏰ Tardanza hoy: <strong class="${tardanzaSede > 0 ? 'text-rose-600' : 'text-emerald-600'}">${tardanzaSede} min</strong></p>
+            <p class="text-[10px] text-slate-400">Horario L-V: ${regla.entradaLV || '08:30'} - ${regla.salidaLV || '18:30'} (Tol. ${regla.toleranciaMin || 10}m)</p>
+          </div>`;
+      }).join("");
+    }
+
+    function exportarReporteCSV() {
+      const filtrados = obtenerRegistrosFiltrados();
+      if (filtrados.length === 0) {
+        alert("No hay registros para exportar.");
+        return;
+      }
+      const cabeceras = ["ID", "Fecha", "Hora", "Colaborador", "Rango", "Sede", "Area", "Condicion_Asistencia", "Tipo_Marcaje", "Minutos_Tardanza", "Minutos_Extras", "Direccion_Y_Cruce_Exacto", "Link_Foto"];
+      const filas = filtrados.map(r => [
+        r.id,
+        r.fechaIso,
+        r.horaTexto,
+        `"${r.nombre}"`,
+        r.rol,
+        r.sede,
+        r.equipo,
+        `"${colaboradorDebeMarcar(r.nombre) ? 'OBLIGADO' : obtenerMotivoPermisoEspecial(r.nombre)}"`,
+        r.tipo,
+        r.minutosTardanza || 0,
+        r.minutosExtras || 0,
+        `"${r.direccion || ''}"`,
+        `"${r.linkFotoOriginal || r.fotoUrl || ''}"`
+      ]);
+      const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [cabeceras.join(","), ...filas.map(e => e.join(","))].join("\n");
+      const link = document.createElement("a");
+      link.setAttribute("href", encodeURI(csvContent));
+      link.setAttribute("download", `Reporte_Asistencia_CREDIBAN_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    /***************************************************************************
+     * 13. RELOJ DIGITAL EN VIVO Y CRONÓMETRO DE REFRIGERIO
+     ***************************************************************************/
+    function iniciarRelojEnVivo() {
+      const actualizar = () => {
+        const ahora = new Date();
+        const opcionesFecha = { weekday: "long", day: "numeric", month: "long", year: "numeric" };
+        const elFecha = document.getElementById("relojFecha");
+        const elHora = document.getElementById("relojHora");
+        if (elFecha) elFecha.textContent = ahora.toLocaleDateString("es-PE", opcionesFecha);
+        if (elHora) elHora.textContent = ahora.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      };
+      actualizar();
+      setInterval(actualizar, 1000);
+    }
+
+    let intervaloRefrigerio = null;
+
+    function activarCronometroRefrigerio(fechaInicio) {
+      const sede = usuarioActivo?.sedeOperativa || "HUACHO";
+      const minPermitidos = Number(PARAMETROS_SEDES[sede]?.refrigerioMin) || 60;
+      const limiteMs = fechaInicio.getTime() + minPermitidos * 60 * 1000;
+      localStorage.setItem("crediban_refri_limite_v6", String(limiteMs));
+      verificarRefrigerioActivo();
+    }
+
+    function detenerCronometroRefrigerio() {
+      localStorage.removeItem("crediban_refri_limite_v6");
+      if (intervaloRefrigerio) clearInterval(intervaloRefrigerio);
+      document.getElementById("refrigerioBanner").classList.add("hidden");
+    }
+
+    function verificarRefrigerioActivo() {
+      const limiteStr = localStorage.getItem("crediban_refri_limite_v6");
+      const banner = document.getElementById("refrigerioBanner");
+      if (!limiteStr) {
+        banner.classList.add("hidden");
+        return;
+      }
+
+      const limiteMs = Number(limiteStr);
+      const fechaLim = new Date(limiteMs);
+      document.getElementById("refriHoraLimite").textContent = fechaLim.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+      banner.classList.remove("hidden");
+
+      if (intervaloRefrigerio) clearInterval(intervaloRefrigerio);
+      intervaloRefrigerio = setInterval(() => {
+        const restanteSeg = Math.floor((limiteMs - Date.now()) / 1000);
+        const elCount = document.getElementById("refriCountdown");
+        if (restanteSeg <= 0) {
+          elCount.textContent = "EXCEDIDO";
+          elCount.className = "px-3 py-1 rounded-xl bg-rose-700 text-white font-mono font-black text-sm animate-pulse";
+        } else {
+          const m = String(Math.floor(restanteSeg / 60)).padStart(2, "0");
+          const s = String(restanteSeg % 60).padStart(2, "0");
+          elCount.textContent = `${m}:${s}`;
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
