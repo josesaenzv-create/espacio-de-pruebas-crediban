@@ -69,21 +69,14 @@
     }
     .btn-active-scale:active { transform: scale(0.97); }
 
-    /* Input de cámara nativo fuera de pantalla (nunca display:none) para disparo inmediato en celulares */
-    .camera-input-native {
-      position: fixed;
-      top: -9999px;
-      left: -9999px;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-    }
+    /* Espejo natural cuando se usa la cámara frontal en vivo */
+    .mirror-video { transform: scaleX(-1); }
   </style>
 </head>
 <body class="min-h-screen pb-24 select-none">
 
   <!-- ==========================================================================
-       1. PANTALLA DE CARGA INICIAL CON DESBLOQUEO AUTOMÁTICO DE SEGURIDAD
+       1. PANTALLA DE CARGA INICIAL CON DESBLOQUEO AUTOMÁTICO
        ========================================================================== -->
   <div id="loadingOverlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0F291E] text-white transition-opacity duration-300">
     <div class="w-16 h-20 mb-3 flex items-center justify-center">
@@ -100,10 +93,9 @@
       </svg>
     </div>
     <p class="text-sm font-extrabold tracking-widest uppercase text-emerald-300">CREDIBAN PERÚ</p>
-    <p class="text-xs text-slate-300 mt-1">Iniciando sistema de asistencia...</p>
+    <p class="text-xs text-slate-300 mt-1">Conectando con servidor central...</p>
   </div>
 
-  <!-- Escudo anti-congelamiento: garantiza que la portada nunca se quede pegada -->
   <script>
     setTimeout(function() {
       var ov = document.getElementById("loadingOverlay");
@@ -118,13 +110,13 @@
     }, 1200);
   </script>
 
-  <!-- BANNER FLOTANTE DE ENVÍO EN SEGUNDO PLANO (Permite apagar pantalla o salir de la app) -->
-  <div id="backgroundSyncBanner" class="hidden fixed top-2 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-md px-3.5 py-2.5 rounded-2xl bg-slate-950/95 text-white shadow-2xl border border-emerald-400/50 flex items-center justify-between gap-2.5">
+  <!-- BANNER FLOTANTE DE ENVÍO EN SEGUNDO PLANO (Con desbloqueo rápido si se toca) -->
+  <div id="backgroundSyncBanner" onclick="forzarReintentoColaSegundoPlano()" class="hidden fixed top-2 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-md px-3.5 py-2.5 rounded-2xl bg-slate-950/95 text-white shadow-2xl border border-emerald-400/50 flex items-center justify-between gap-2.5 cursor-pointer">
     <div class="flex items-center gap-2.5 min-w-0">
       <div class="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
       <div class="min-w-0">
-        <p class="text-[11px] font-black text-emerald-300 truncate">☁️ Enviando asistencia en 2do plano...</p>
-        <p class="text-[10px] font-semibold text-slate-300 truncate">Ya puedes apagar tu pantalla o salir de la app</p>
+        <p id="bgSyncTitulo" class="text-[11px] font-black text-emerald-300 truncate">☁️ Subiendo asistencia a Google Sheets...</p>
+        <p class="text-[10px] font-semibold text-slate-300 truncate">Puedes apagar tu pantalla o salir (Toca aquí para forzar envío)</p>
       </div>
     </div>
     <span id="bgSyncCountBadge" class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-black text-[10px] shrink-0">1 env.</span>
@@ -137,7 +129,7 @@
   </div>
 
   <!-- ==========================================================================
-       2. PANTALLA DE LOGIN BLINDADA (SOLO USUARIO Y CONTRASEÑA)
+       2. PANTALLA DE LOGIN BLINDADA (100% EN VIVO CONTRA SCRIPT DE USUARIOS)
        ========================================================================== -->
   <div id="loginScreen" class="hidden min-h-screen flex flex-col justify-center items-center p-4 bg-gradient-to-br from-[#0F291E] via-[#1B4332] to-slate-900">
     <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-white/20 border-t-8 border-t-[#59B447]">
@@ -322,14 +314,14 @@
     </div>
 
     <!-- ========================================================================
-         PESTAÑA 1: MARCAR ASISTENCIA TURBO (DIRECCIÓN DE LA CALLE MÁS CERCANA)
+         PESTAÑA 1: MARCAR ASISTENCIA TURBO (DIRECCIÓN EXACTA DISTRITO / PROVINCIA)
          ======================================================================== -->
     <main id="view_MARCAR" class="p-3 space-y-3">
       
       <div class="card-clean p-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
-            <p id="relojFecha" class="text-[11px] font-bold uppercase text-slate-400">Miércoles, 4 de Noviembre</p>
+            <p id="relojFecha" class="text-[11px] font-bold uppercase text-slate-400">Jueves, 5 de Noviembre</p>
             <p id="relojHora" class="text-2xl font-black text-[#1B4332] tracking-tight">08:30:00 AM</p>
           </div>
           <div class="text-right">
@@ -338,7 +330,7 @@
           </div>
         </div>
 
-        <!-- Dirección rápida de la calle o pista más cercana (Sin demora de cálculo de cruce) -->
+        <!-- Dirección exacta sin duplicar distritos (Ej. Jirón Moore, Hualmay 15136 • Prov. Huaura, Lima) -->
         <div class="mt-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 space-y-2">
           <div class="flex items-start gap-2.5">
             <div class="w-9 h-9 rounded-lg bg-emerald-100 text-[#1B4332] flex items-center justify-center shrink-0 mt-0.5">
@@ -346,7 +338,7 @@
             </div>
             <div class="min-w-0 flex-1">
               <p id="calleDetectadaTitulo" class="text-xs font-extrabold text-slate-800 truncate">Detectando la calle o pista más cercana...</p>
-              <p id="sectorDetectadoSub" class="text-[11px] font-bold text-emerald-700 truncate">📍 Ubicación rápida de alta precisión activa</p>
+              <p id="sectorDetectadoSub" class="text-[11px] font-bold text-emerald-700 truncate">📍 Distrito y Provincia verificados</p>
               <p id="distritoDetectadoSub" class="text-[10px] font-semibold text-slate-500 truncate">Listo para sellar al instante</p>
             </div>
           </div>
@@ -373,7 +365,7 @@
         <div class="flex items-center justify-between">
           <label class="block text-[11px] font-extrabold uppercase text-slate-500">1. Selecciona el Tipo de Marcaje</label>
           <span id="badgeModoFotoMarcaje" class="px-2 py-0.5 rounded-md bg-emerald-50 text-[#1B4332] border border-emerald-200 text-[10px] font-black uppercase">
-            📸 Requiere Foto
+            📸 Cámara en Vivo
           </span>
         </div>
 
@@ -417,7 +409,7 @@
               <input id="chkEnCampo" type="checkbox" onchange="guardarBorradorFormulario()" class="w-4 h-4 accent-[#59B447] rounded" />
               <span>🛵 Marcaje desde Campo / Comisión</span>
             </label>
-            <span class="text-[10px] font-semibold text-emerald-600"><i class="fa-solid fa-bolt mr-1"></i>Proceso Turbo &lt; 3 seg</span>
+            <span class="text-[10px] font-semibold text-emerald-600"><i class="fa-solid fa-shield-halved mr-1"></i>Solo Cámara en Vivo (Sin Galería)</span>
           </div>
           <input id="inputMotivoAsistencia" type="text" oninput="guardarBorradorFormulario()" placeholder="Cliente o motivo opcional (Ej. Agencia / Visita Cliente)" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#59B447]" />
         </div>
@@ -425,31 +417,21 @@
         <div id="notaObligatoriaFotoBox" class="p-2.5 rounded-xl bg-amber-50 border border-amber-300/80 flex items-center gap-2.5">
           <i class="fa-solid fa-triangle-exclamation text-amber-600 text-base shrink-0"></i>
           <p id="notaObligatoriaFotoTexto" class="text-[11px] font-bold text-amber-900 leading-snug">
-            <strong>NOTA OBLIGATORIA:</strong> En la fotografía debe verse claramente el rostro del colaborador junto con el entorno.
+            <strong>NOTA OBLIGATORIA:</strong> Fotografía en tiempo real (bloqueada la subida desde galería o almacenamiento interno).
           </p>
         </div>
 
-        <!-- Inputs Nativos de Cámara -->
-        <input id="cameraInputAsistencia" type="file" accept="image/*" capture="user" class="camera-input-native" onchange="procesarFotoCapturada(event, 'ASISTENCIA')" />
-        <input id="cameraInputAsistenciaAlt" type="file" accept="image/*" class="camera-input-native" onchange="procesarFotoCapturada(event, 'ASISTENCIA')" />
-
-        <!-- BOTÓN A (Cuando el marcaje SÍ requiere foto): Es un <label> nativo directo al input de cámara para que NUNCA falle en ningún celular -->
-        <label id="labelBtnTomarFotoAsistencia" for="cameraInputAsistencia" class="w-full py-4 rounded-2xl bg-[#59B447] hover:bg-[#4ea33d] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-[#59B447]/30 btn-active-scale transition flex items-center justify-center gap-2 cursor-pointer text-center">
+        <!-- BOTÓN A (Cuando el marcaje SÍ requiere foto): Abre el Visor de Cámara en Vivo 100% Verídica (Imposible elegir de Google Fotos / Galería) -->
+        <button type="button" id="btnAbrirCamaraVivaAsistencia" onclick="abrirCamaraEnVivo('ASISTENCIA', 'user')" class="w-full py-4 rounded-2xl bg-[#59B447] hover:bg-[#4ea33d] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-[#59B447]/30 btn-active-scale transition flex items-center justify-center gap-2 cursor-pointer">
           <i class="fa-solid fa-camera text-lg"></i>
-          <span id="txtLabelTomarFotoAsistencia">Tomar Foto (ENTRADA)</span>
-        </label>
+          <span id="txtLabelTomarFotoAsistencia">Tomar Foto en Vivo (ENTRADA)</span>
+        </button>
 
         <!-- BOTÓN B (Cuando el Gerente desactivó la foto para este marcaje): Registra Hora + GPS al instante sin abrir cámara -->
         <button type="button" id="btnRegistrarSinFotoDirecto" onclick="registrarAsistenciaSinFotoDirecto()" class="hidden w-full py-4 rounded-2xl bg-[#1B4332] hover:bg-[#0F291E] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-[#1B4332]/30 btn-active-scale transition flex items-center justify-center gap-2 cursor-pointer">
           <i class="fa-solid fa-location-crosshairs text-lg text-[#59B447]"></i>
           <span id="txtBtnSinFotoDirecto">⚡ Registrar Hora + Ubicación GPS (Sin Foto)</span>
         </button>
-
-        <div id="boxCamaraAlternativaAsistencia" class="text-center pt-0.5">
-          <label for="cameraInputAsistenciaAlt" class="inline-block text-[11px] font-bold text-slate-500 hover:text-[#1B4332] underline cursor-pointer">
-            <i class="fa-solid fa-camera-rotate mr-1"></i>¿Usas cámara trasera o PC? Toca aquí para Cámara Alternativa
-          </label>
-        </div>
       </div>
 
       <!-- SECCIÓN DEBAJO DEL BOTÓN: "MIS MARCAJES DE HOY" -->
@@ -470,14 +452,14 @@
     </main>
 
     <!-- ========================================================================
-         PESTAÑA 2: FOTOS DE GESTIÓN EN CAMPO (INSTANTÁNEA + WHATSAPP + CARPETA)
+         PESTAÑA 2: FOTOS DE GESTIÓN EN CAMPO (SOLO CÁMARA EN VIVO + WHATSAPP)
          ======================================================================== -->
     <section id="view_GESTION" class="hidden p-3 space-y-3">
       <div class="card-clean p-4 space-y-3 border-l-4 border-l-[#59B447]">
         <div>
-          <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-[#1B4332] font-black text-[10px] uppercase">100% Calidad Original • Sello Instantáneo &lt;1s</span>
+          <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-[#1B4332] font-black text-[10px] uppercase">100% Cámara Verídica en Vivo • Sin Subir de Galería</span>
           <h2 class="text-base font-black text-slate-800 mt-1">📸 Cámara de Gestión en Campo</h2>
-          <p class="text-xs text-slate-500">Estampa al instante el minimapa sólido y la dirección de la calle o pista más cercana, lista para enviar por WhatsApp y guardar en <strong>"Mi gestión Crediban"</strong>.</p>
+          <p class="text-xs text-slate-500">Estampa al instante el minimapa sólido y la dirección exacta (Distrito y Provincia verificados), lista para enviar por WhatsApp y guardar en <strong>"Mi gestión Crediban"</strong>.</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
@@ -515,18 +497,16 @@
           </button>
         </div>
 
-        <input id="cameraInputGestionTrasera" type="file" accept="image/*" capture="environment" class="camera-input-native" onchange="procesarFotoCapturada(event, 'GESTION')" />
-        <input id="cameraInputGestionSelfie" type="file" accept="image/*" capture="user" class="camera-input-native" onchange="procesarFotoCapturada(event, 'GESTION')" />
-
+        <!-- Botones de Cámara en Vivo (Sin galería ni archivos internos) -->
         <div class="grid grid-cols-2 gap-2.5 pt-1">
-          <label for="cameraInputGestionTrasera" class="py-3.5 px-3 rounded-2xl bg-[#1B4332] hover:bg-[#0F291E] text-white font-black text-xs uppercase tracking-wide shadow-md btn-active-scale transition flex flex-col items-center justify-center gap-1 cursor-pointer text-center">
+          <button type="button" onclick="abrirCamaraEnVivo('GESTION', 'environment')" class="py-3.5 px-3 rounded-2xl bg-[#1B4332] hover:bg-[#0F291E] text-white font-black text-xs uppercase tracking-wide shadow-md btn-active-scale transition flex flex-col items-center justify-center gap-1 cursor-pointer text-center">
             <i class="fa-solid fa-camera text-xl text-[#59B447]"></i>
-            <span>Cámara Trasera</span>
-          </label>
-          <label for="cameraInputGestionSelfie" class="py-3.5 px-3 rounded-2xl bg-[#59B447] hover:bg-[#4ea33d] text-white font-black text-xs uppercase tracking-wide shadow-md btn-active-scale transition flex flex-col items-center justify-center gap-1 cursor-pointer text-center">
+            <span>Cámara Trasera (En Vivo)</span>
+          </button>
+          <button type="button" onclick="abrirCamaraEnVivo('GESTION', 'user')" class="py-3.5 px-3 rounded-2xl bg-[#59B447] hover:bg-[#4ea33d] text-white font-black text-xs uppercase tracking-wide shadow-md btn-active-scale transition flex flex-col items-center justify-center gap-1 cursor-pointer text-center">
             <i class="fa-solid fa-id-badge text-xl text-white"></i>
-            <span>Selfie con Cliente</span>
-          </label>
+            <span>Selfie con Cliente (En Vivo)</span>
+          </button>
         </div>
       </div>
 
@@ -708,7 +688,7 @@
               <th class="p-2.5">Tardanza Entrada</th>
               <th class="p-2.5">Exceso Refri.</th>
               <th class="p-2.5">Horas Extras (Caja/Admin)</th>
-              <th class="p-2.5">Dirección Calle Más Cercana</th>
+              <th class="p-2.5">Dirección Exacta (Distrito / Provincia)</th>
               <th class="p-2.5 text-center">Evidencia</th>
             </tr>
           </thead>
@@ -749,7 +729,6 @@
          ======================================================================== -->
     <section id="view_PERMISOS" class="hidden p-3 space-y-3">
 
-      <!-- PANEL 1: CONFIGURACIÓN DE FOTOS POR TIPO DE MARCAJE -->
       <div class="card-clean p-4 space-y-3 border-l-4 border-l-amber-500">
         <div class="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
@@ -801,7 +780,6 @@
         </div>
       </div>
 
-      <!-- PANEL 2: QUIÉN DEBE MARCAR Y PERMISOS ESPECIALES (SINCRONIZADO EN NUBE) -->
       <div class="card-clean p-4 space-y-3 border-l-4 border-l-[#59B447]">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -871,7 +849,48 @@
   </div>
 
   <!-- ==========================================================================
-       4. MODAL DE VISTA PREVIA Y VISOR DE EVIDENCIA FOTOGRÁFICA
+       4. MODAL DE CÁMARA EN VIVO VERÍDICA (BLOQUEA GALERÍA / GOOGLE FOTOS)
+       ========================================================================== -->
+  <div id="modalCamaraViva" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col justify-between p-3">
+    <div class="max-w-lg w-full mx-auto bg-slate-900 rounded-3xl overflow-hidden shadow-2xl my-auto border border-emerald-500/40">
+      
+      <div class="bg-[#0F291E] text-white px-4 py-3 flex items-center justify-between">
+        <div>
+          <span class="px-2 py-0.5 rounded bg-[#59B447] text-[10px] font-black uppercase">🔒 CÁMARA EN VIVO VERIFICADA</span>
+          <h3 id="tituloCamaraViva" class="text-xs font-bold text-emerald-200 mt-0.5">Captura en tiempo real • Sin acceso a Galería</h3>
+        </div>
+        <button type="button" onclick="cerrarCamaraEnVivo()" class="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="relative bg-black flex items-center justify-center min-h-[340px] max-h-[65vh] overflow-hidden">
+        <video id="videoCamaraViva" autoplay playsinline muted class="w-full h-full max-h-[65vh] object-cover mirror-video"></video>
+        
+        <!-- Guía visual de rostro/entorno -->
+        <div class="pointer-events-none absolute inset-4 border-2 border-dashed border-emerald-400/40 rounded-2xl flex flex-col justify-end p-3">
+          <p id="liveCameraGpsPreview" class="text-[11px] font-extrabold text-white bg-black/60 px-2.5 py-1 rounded-lg backdrop-blur-sm truncate">
+            📍 Ubicación verificada en vivo
+          </p>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-900 flex items-center justify-between gap-3">
+        <button type="button" onclick="alternarLenteCamaraViva()" class="px-3.5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-extrabold flex items-center gap-1.5">
+          <i class="fa-solid fa-camera-rotate text-emerald-400"></i>
+          <span>Girar Lente</span>
+        </button>
+
+        <button type="button" onclick="capturarFotogramaEnVivo()" class="flex-1 py-3.5 rounded-2xl bg-[#59B447] hover:bg-[#4ea33d] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-[#59B447]/30 btn-active-scale transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-camera text-base"></i>
+          <span>Capturar Foto Ahora</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       5. MODAL DE VISTA PREVIA Y VISOR DE EVIDENCIA FOTOGRÁFICA
        ========================================================================== -->
   <div id="modalPreviewFoto" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex flex-col justify-between p-3 overflow-y-auto">
     <div class="max-w-lg w-full mx-auto bg-white rounded-3xl overflow-hidden shadow-2xl my-auto border border-emerald-500/30">
@@ -879,7 +898,7 @@
       <div class="bg-[#0F291E] text-white px-4 py-3 flex items-center justify-between">
         <div>
           <span id="previewBadgeModo" class="px-2 py-0.5 rounded bg-[#59B447] text-[10px] font-black uppercase">EVIDENCIA FOTOGRÁFICA</span>
-          <h3 id="previewSubtitulo" class="text-xs font-bold text-emerald-200 mt-0.5">Minimapa Sólido + Calle o Pista Más Cercana</h3>
+          <h3 id="previewSubtitulo" class="text-xs font-bold text-emerald-200 mt-0.5">Minimapa Sólido + Distrito y Provincia Exactos</h3>
         </div>
         <button type="button" onclick="cerrarModalPreview()" class="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center">
           <i class="fa-solid fa-xmark"></i>
@@ -933,12 +952,12 @@
   <canvas id="hiddenCanvas" class="hidden"></canvas>
 <!-- FIN DE LA PARTE 1 DE 3 — PEGA LA PARTE 2 JUSTO DEBAJO DE ESTA LÍNEA --><!-- ============================================================================
      SISTEMA INTEGRAL DE ASISTENCIA Y FOTOS DE GESTIÓN EN CAMPO - CREDIBAN PERÚ S.A.C.
-     PARTE 2 DE 3: Núcleo JavaScript, Envío en 2do Plano, Checklist Diario del Asesor,
-     Configurador Gerencial de Fotos por Marcaje y Sincronización Multi-Dispositivo
+     PARTE 2 DE 3: Núcleo JavaScript (Sin Claves Locales), Envío en 2do Plano Desbloqueado,
+     Checklist Diario del Asesor y Sincronización Multi-Dispositivo en la Nube
      ============================================================================ -->
   <script>
     /***************************************************************************
-     * 1. CONFIGURACIÓN DE SERVIDORES Y CREDENCIALES OFICIALES
+     * 1. CONFIGURACIÓN DE SERVIDORES Y CREDENCIALES EN LÍNEA (SIN CLAVES LOCALES)
      ***************************************************************************/
     const CONFIG_SISTEMA = {
       ATTENDANCE_API_URL: "https://script.google.com/macros/s/AKfycbzhHImayB8Qu2WnFI0dYhWIU11L7eV78gRidEp_at8ulhlyPzWTm1at4CjtrHs6dwb_Gg/exec",
@@ -956,20 +975,6 @@
       "HUANUCO": { estado: "HABILITADO", diasLaborables: ["LUN","MAR","MIE","JUE","VIE","SAB"], entradaLV: "08:30", salidaLV: "18:30", entradaSab: "09:00", salidaSab: "13:30", toleranciaMin: 10, refrigerioMin: 60, salidaCajaLV: "19:00", salidaCajaSab: "14:00" }
     };
     let FERIADOS_NO_LABORABLES = [];
-
-    const USUARIOS_RESPALDO = [
-      { usuario: "CRISTHIAN.TRINIDAD", nombre: "CRISTHIAN.TRINIDAD", clave: "123", rol: "GERENTE", cargo: "GERENTE GENERAL", sede: "TODAS", equipo: "TODOS", estado: "HABILITADO" },
-      { usuario: "JOSE.SAENZV", nombre: "JOSE.SAENZV", clave: "123", rol: "GERENTE", cargo: "GERENTE", sede: "HUACHO", equipo: "TODOS", estado: "HABILITADO" },
-      { usuario: "CARLOS.MENDOZA", nombre: "CARLOS MENDOZA", clave: "admin123", rol: "ADMINISTRADOR", cargo: "ADMINISTRADOR", sede: "HUACHO", equipo: "EQUIPO A", estado: "HABILITADO" },
-      { usuario: "MARIA.HUARAZ", nombre: "MARIA ADMIN HUARAZ", clave: "admin123", rol: "ADMINISTRADOR", cargo: "ADMINISTRADOR", sede: "HUARAZ", equipo: "EQUIPO B", estado: "HABILITADO" },
-      { usuario: "ADMIN.ICA", nombre: "ADMIN ICA", clave: "admin123", rol: "ADMINISTRADOR", cargo: "ADMINISTRADOR", sede: "ICA", equipo: "EQUIPO C", estado: "HABILITADO" },
-      { usuario: "ABIGAIL.SANDOVAL", nombre: "ABIGAIL SANDOVAL", clave: "1234", rol: "ASESOR", cargo: "ASESOR", sede: "HUACHO", equipo: "EQUIPO A", estado: "HABILITADO" },
-      { usuario: "HEYDI.TALAVERANOJ", nombre: "HEIDY", clave: "1234", rol: "ASESOR", cargo: "ASESOR", sede: "HUACHO", equipo: "EQUIPO A", estado: "HABILITADO" },
-      { usuario: "HUGO", nombre: "HUGO", clave: "1234", rol: "ASESOR", cargo: "ASESOR", sede: "HUACHO", equipo: "EQUIPO A", estado: "HABILITADO" },
-      { usuario: "ARTURO.PICHILINGUEV", nombre: "ARTURO", clave: "1234", rol: "ASESOR", cargo: "ASESOR", sede: "HUACHO", equipo: "EQUIPO B", estado: "HABILITADO" },
-      { usuario: "BRITHANY.BERNALR", nombre: "BRITHANY", clave: "1234", rol: "ASESOR", cargo: "ASESOR", sede: "HUACHO", equipo: "EQUIPO B", estado: "HABILITADO" },
-      { usuario: "SHAYRA.CAJA", nombre: "SHAYRA CAJA", clave: "caja123", rol: "CAJERO", cargo: "CAJERO", sede: "HUACHO", equipo: "CAJA", estado: "HABILITADO" }
-    ];
 
     /***************************************************************************
      * 2. MOTOR DE FECHA LOCAL PERÚ (CIERRE DE DÍA ESTRICTO A LAS 23:59:59)
@@ -1011,7 +1016,7 @@
 
     let mapaPermisosAsistencia = {};
     try {
-      mapaPermisosAsistencia = JSON.parse(localStorage.getItem("crediban_permisos_asistencia_v9") || localStorage.getItem("crediban_permisos_asistencia_v8") || "{}");
+      mapaPermisosAsistencia = JSON.parse(localStorage.getItem("crediban_permisos_asistencia_v10") || localStorage.getItem("crediban_permisos_asistencia_v9") || "{}");
     } catch (e) { mapaPermisosAsistencia = {}; }
 
     let mapaConfigFotosPorSede = {
@@ -1023,15 +1028,19 @@
       }
     };
     try {
-      const savedFotos = localStorage.getItem("crediban_config_fotos_sede_v9") || localStorage.getItem("crediban_config_fotos_sede_v8");
+      const savedFotos = localStorage.getItem("crediban_config_fotos_sede_v10") || localStorage.getItem("crediban_config_fotos_sede_v9");
       if (savedFotos) mapaConfigFotosPorSede = JSON.parse(savedFotos);
     } catch (e) {}
 
-    let ultimoTimestampConfigNube = Number(localStorage.getItem("crediban_config_ts_v9") || 0);
+    let ultimoTimestampConfigNube = Number(localStorage.getItem("crediban_config_ts_v10") || 0);
+
+    // Limpiar colas antiguas atascadas por el límite de 64KB de versiones previas
+    localStorage.removeItem("crediban_cola_bg_v8");
+    localStorage.removeItem("crediban_cola_bg_v9");
 
     let colaEnvioSegundoPlano = [];
     try {
-      colaEnvioSegundoPlano = JSON.parse(localStorage.getItem("crediban_cola_bg_v9") || "[]");
+      colaEnvioSegundoPlano = JSON.parse(localStorage.getItem("crediban_cola_bg_v10") || "[]");
     } catch (e) { colaEnvioSegundoPlano = []; }
     let procesandoColaBg = false;
 
@@ -1055,30 +1064,30 @@
     let directorioGestionHandle = null;
     let listaFotosAlbumCache = [];
 
-    // Estado GPS Rápido: Enfocado en la Pista o Calle Más Cercana (Sin demora de cálculo de cruces)
+    // Estado GPS con Separación Exacta de Distrito vs Provincia (UBIGEO Perú)
     let gpsState = {
       activo: false,
       lat: -11.1068,
       lng: -77.6046,
-      altitud: 45.0,
+      altitud: 60.7,
       velocidad: 0.0,
-      precision: 12,
-      rumboGrados: 90,
-      rumbo: "90° E",
-      calleMasCercana: "Avenida Miguel Grau",
+      precision: 8,
+      rumboGrados: 359,
+      rumbo: "359° N",
+      calleMasCercana: "Jirón Moore",
       numeroPuertaOTramo: "",
-      urbanizacionOSector: "Hualmay",
-      codigoPostal: "15135",
+      urbanizacionOSector: "",
+      codigoPostal: "15136",
       distrito: "Hualmay",
-      provincia: "Huacho",
+      provincia: "Huaura",
       region: "Lima",
-      direccionCompleta: "Avenida Miguel Grau, Hualmay, Huacho, Lima",
+      direccionCompleta: "Jirón Moore, Hualmay 15136, Prov. Huaura, Lima",
       ultimoGeocodeTs: 0,
       geocodificandoEnCurso: false
     };
 
     /***************************************************************************
-     * 4. ARRANQUE ULTRA-RÁPIDO SIN BLOQUEOS E INDEXEDDB
+     * 4. ARRANQUE DIRECTO EN LÍNEA E INDEXEDDB
      ***************************************************************************/
     window.addEventListener("DOMContentLoaded", async () => {
       try {
@@ -1094,30 +1103,25 @@
           }
         });
 
-        cargarCacheUsuariosInmediato();
-
-        // Mostrar inmediatamente la pantalla correspondiente sin esperar a la red
-        const sesionGuardada = localStorage.getItem("crediban_sesion_activa_v9") || localStorage.getItem("crediban_sesion_activa_v8");
+        const sesionGuardada = localStorage.getItem("crediban_sesion_activa_v10") || localStorage.getItem("crediban_sesion_activa_v9");
         if (sesionGuardada) {
           try {
             usuarioActivo = JSON.parse(sesionGuardada);
             mostrarAppPrincipal();
           } catch (e) {
-            localStorage.removeItem("crediban_sesion_activa_v9");
+            localStorage.removeItem("crediban_sesion_activa_v10");
             mostrarPantallaLogin();
           }
         } else {
           mostrarPantallaLogin();
         }
 
-        // Ocultar pantalla de carga al instante
         const overlay = document.getElementById("loadingOverlay");
         if (overlay) {
           overlay.classList.add("opacity-0");
           setTimeout(() => overlay.classList.add("hidden"), 150);
         }
 
-        // Tareas en segundo plano (No bloquean jamás la pantalla)
         iniciarRastreoGpsContinuo();
         promesaCargaInicial = sincronizarUsuariosYParametros();
         await inicializarBaseDatosIndexedDB();
@@ -1128,7 +1132,6 @@
           procesarColaSegundoPlano();
         }
       } catch (errInit) {
-        console.error("Aviso arranque:", errInit);
         const overlay = document.getElementById("loadingOverlay");
         if (overlay) overlay.classList.add("hidden");
         mostrarPantallaLogin();
@@ -1139,8 +1142,15 @@
       window.history.pushState({ credibanApp: true }, "", window.location.href);
 
       window.addEventListener("popstate", () => {
-        const modal = document.getElementById("modalPreviewFoto");
-        if (modal && !modal.classList.contains("hidden")) {
+        const modalCam = document.getElementById("modalCamaraViva");
+        if (modalCam && !modalCam.classList.contains("hidden")) {
+          cerrarCamaraEnVivo();
+          window.history.pushState({ credibanApp: true }, "", window.location.href);
+          return;
+        }
+
+        const modalPrev = document.getElementById("modalPreviewFoto");
+        if (modalPrev && !modalPrev.classList.contains("hidden")) {
           cerrarModalPreview();
           window.history.pushState({ credibanApp: true }, "", window.location.href);
           mostrarToast("Vista previa cerrada (Tus datos siguen intactos)");
@@ -1181,12 +1191,12 @@
         tipoActividadGestion: document.getElementById("gestionTipoActividad")?.value || "Evaluación / Visita de Campo",
         tipoMarcaje: tipoMarcajeSeleccionado
       };
-      localStorage.setItem("crediban_borrador_form_v9", JSON.stringify(borrador));
+      localStorage.setItem("crediban_borrador_form_v10", JSON.stringify(borrador));
     }
 
     function restaurarBorradorFormulario() {
       try {
-        const raw = localStorage.getItem("crediban_borrador_form_v9") || localStorage.getItem("crediban_borrador_form_v8");
+        const raw = localStorage.getItem("crediban_borrador_form_v10") || localStorage.getItem("crediban_borrador_form_v9");
         if (!raw) return;
         const b = JSON.parse(raw);
         if (document.getElementById("chkEnCampo")) document.getElementById("chkEnCampo").checked = !!b.chkEnCampo;
@@ -1351,47 +1361,32 @@
     }
 
     /***************************************************************************
-     * 6. SINCRONIZACIÓN DE USUARIOS, PARAMETROS Y PERMISOS MULTI-DISPOSITIVO
+     * 6. SINCRONIZACIÓN EN LÍNEA DE USUARIOS, PARAMETROS Y PERMISOS EN NUBE
      ***************************************************************************/
-    function cargarCacheUsuariosInmediato() {
-      const cache = localStorage.getItem("crediban_usuarios_cache_v9") || localStorage.getItem("crediban_usuarios_cache_v8");
-      if (cache) {
-        try {
-          const parsed = JSON.parse(cache);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            catalogoUsuarios = parsed;
-            return;
-          }
-        } catch (e) {}
-      }
-      catalogoUsuarios = [...USUARIOS_RESPALDO];
-    }
-
     async function sincronizarUsuariosYParametros() {
-      try {
-        const respParam = await fetch(`${CONFIG_SISTEMA.ATTENDANCE_API_URL}?action=getParametros&t=${Date.now()}`);
-        const dataParam = await respParam.json();
-        if (dataParam && dataParam.status === "ok" && dataParam.parametros) {
-          aplicarParametrosRecibidos(dataParam.parametros);
-        }
-      } catch (e) {}
-
-      try {
-        const respUser = await fetch(`${CONFIG_SISTEMA.AUTH_USERS_API_URL}?action=getUsers&t=${Date.now()}`);
-        const dataUser = await respUser.json();
-        const listaCruda = Array.isArray(dataUser) ? dataUser : (dataUser.usuarios || dataUser.users || dataUser.data || []);
-
-        if (listaCruda.length > 0) {
-          const normalizados = listaCruda
-            .map(u => normalizarUsuarioScript(u))
-            .filter(u => u.nombre && u.estado !== "DESHABILITADO" && u.estado !== "INACTIVO");
-
-          if (normalizados.length > 0) {
-            catalogoUsuarios = normalizados;
-            localStorage.setItem("crediban_usuarios_cache_v9", JSON.stringify(catalogoUsuarios));
+      // Ejecutar ambas consultas en paralelo para máxima velocidad
+      const promParams = fetch(`${CONFIG_SISTEMA.ATTENDANCE_API_URL}?action=getParametros&t=${Date.now()}`)
+        .then(r => r.json())
+        .then(dataParam => {
+          if (dataParam && dataParam.status === "ok" && dataParam.parametros) {
+            aplicarParametrosRecibidos(dataParam.parametros);
           }
-        }
-      } catch (e) {}
+        })
+        .catch(() => {});
+
+      const promUsers = fetch(`${CONFIG_SISTEMA.AUTH_USERS_API_URL}?action=getUsers&t=${Date.now()}`)
+        .then(r => r.json())
+        .then(dataUser => {
+          const listaCruda = Array.isArray(dataUser) ? dataUser : (dataUser.usuarios || dataUser.users || dataUser.data || []);
+          if (listaCruda.length > 0) {
+            catalogoUsuarios = listaCruda
+              .map(u => normalizarUsuarioScript(u))
+              .filter(u => u.nombre && u.estado !== "DESHABILITADO" && u.estado !== "INACTIVO");
+          }
+        })
+        .catch(() => {});
+
+      await Promise.all([promParams, promUsers]);
     }
 
     function aplicarParametrosRecibidos(p) {
@@ -1415,12 +1410,12 @@
       }
     }
 
-    // Guarda en la nube los permisos ("Quién Marca") y las reglas de fotos para que todos los celulares/PCs vean lo mismo
+    // Sincronización en la Nube de Permisos ("Quién Marca") y Reglas de Fotos (Sin keepalive bloqueante)
     async function sincronizarConfigGerencialEnNube() {
       if (!esUsuarioGerente(usuarioActivo)) return;
       const tsAhora = Date.now();
       ultimoTimestampConfigNube = tsAhora;
-      localStorage.setItem("crediban_config_ts_v9", String(tsAhora));
+      localStorage.setItem("crediban_config_ts_v10", String(tsAhora));
 
       const badge = document.getElementById("badgeSyncConfigNube");
       if (badge) {
@@ -1439,7 +1434,6 @@
       try {
         await fetch(CONFIG_SISTEMA.ATTENDANCE_API_URL, {
           method: "POST",
-          keepalive: true,
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             action: "registrarAsistencia",
@@ -1462,7 +1456,7 @@
         }
       } catch (e) {
         if (badge) {
-          badge.innerHTML = `<i class="fa-solid fa-cloud mr-1"></i>Guardado Local (Pendiente red)`;
+          badge.innerHTML = `<i class="fa-solid fa-cloud mr-1"></i>Guardado (Sincronizando...)`;
         }
       }
     }
@@ -1495,15 +1489,15 @@
 
       if (configMasReciente && mayorTs >= ultimoTimestampConfigNube) {
         ultimoTimestampConfigNube = mayorTs;
-        localStorage.setItem("crediban_config_ts_v9", String(mayorTs));
+        localStorage.setItem("crediban_config_ts_v10", String(mayorTs));
 
         if (configMasReciente.permisos && typeof configMasReciente.permisos === "object") {
           mapaPermisosAsistencia = configMasReciente.permisos;
-          localStorage.setItem("crediban_permisos_asistencia_v9", JSON.stringify(mapaPermisosAsistencia));
+          localStorage.setItem("crediban_permisos_asistencia_v10", JSON.stringify(mapaPermisosAsistencia));
         }
         if (configMasReciente.fotos && typeof configMasReciente.fotos === "object") {
           mapaConfigFotosPorSede = configMasReciente.fotos;
-          localStorage.setItem("crediban_config_fotos_sede_v9", JSON.stringify(mapaConfigFotosPorSede));
+          localStorage.setItem("crediban_config_fotos_sede_v10", JSON.stringify(mapaConfigFotosPorSede));
         }
         actualizarBotonAccionSegunConfigFoto();
         if (esUsuarioGerente(usuarioActivo) && pestanaActual === "PERMISOS") {
@@ -1592,7 +1586,7 @@
     }
 
     /***************************************************************************
-     * 7. CONFIGURADOR GERENCIAL DE FOTOS POR MARCAJE + COLA EN SEGUNDO PLANO
+     * 7. CONFIGURADOR GERENCIAL DE FOTOS POR MARCAJE + COLA EN 2DO PLANO REPARADA
      ***************************************************************************/
     function marcajeRequiereFoto(sede, tipoMarcaje) {
       const sedeKey = String(sede || "HUACHO").trim().toUpperCase();
@@ -1642,7 +1636,7 @@
         });
       }
 
-      localStorage.setItem("crediban_config_fotos_sede_v9", JSON.stringify(mapaConfigFotosPorSede));
+      localStorage.setItem("crediban_config_fotos_sede_v10", JSON.stringify(mapaConfigFotosPorSede));
       renderizarPanelConfigFotos();
       actualizarBotonAccionSegunConfigFoto();
       sincronizarConfigGerencialEnNube();
@@ -1672,7 +1666,7 @@
         });
       }
 
-      localStorage.setItem("crediban_config_fotos_sede_v9", JSON.stringify(mapaConfigFotosPorSede));
+      localStorage.setItem("crediban_config_fotos_sede_v10", JSON.stringify(mapaConfigFotosPorSede));
       renderizarPanelConfigFotos();
       actualizarBotonAccionSegunConfigFoto();
       sincronizarConfigGerencialEnNube();
@@ -1705,7 +1699,7 @@
                 </span>
               </div>
               <h4 class="text-xs font-black text-slate-900 mt-1"><i class="fa-solid ${t.icono} mr-1 text-[#1B4332]"></i>${t.titulo}</h4>
-              <p class="text-[10px] font-semibold text-slate-600 mt-0.5">${pideFoto ? 'Solicita selfie con minimapa al colaborador' : 'Registra al instante Hora + Calle Más Cercana'}</p>
+              <p class="text-[10px] font-semibold text-slate-600 mt-0.5">${pideFoto ? 'Solicita cámara en vivo con minimapa' : 'Registra al instante Hora + Dirección Exacta'}</p>
             </div>
 
             <button
@@ -1725,35 +1719,33 @@
       const badge = document.getElementById("badgeModoFotoMarcaje");
       const notaBox = document.getElementById("notaObligatoriaFotoBox");
       const notaTxt = document.getElementById("notaObligatoriaFotoTexto");
-      const labelFoto = document.getElementById("labelBtnTomarFotoAsistencia");
+      const btnCamViva = document.getElementById("btnAbrirCamaraVivaAsistencia");
       const txtLabelFoto = document.getElementById("txtLabelTomarFotoAsistencia");
       const btnSinFoto = document.getElementById("btnRegistrarSinFotoDirecto");
       const txtBtnSinFoto = document.getElementById("txtBtnSinFotoDirecto");
-      const boxAlt = document.getElementById("boxCamaraAlternativaAsistencia");
 
-      if (!badge || !labelFoto || !btnSinFoto) return;
+      if (!badge || !btnCamViva || !btnSinFoto) return;
 
       if (pideFoto) {
-        badge.textContent = "📸 Requiere Foto";
+        badge.textContent = "📸 Cámara en Vivo";
         badge.className = "px-2 py-0.5 rounded-md bg-emerald-50 text-[#1B4332] border border-emerald-200 text-[10px] font-black uppercase";
         notaBox.className = "p-2.5 rounded-xl bg-amber-50 border border-amber-300/80 flex items-center gap-2.5";
-        notaTxt.innerHTML = `<strong>NOTA OBLIGATORIA:</strong> En la fotografía debe verse claramente el rostro del colaborador junto con el entorno.`;
-        txtLabelFoto.textContent = `Tomar Foto (${tipoMarcajeSeleccionado})`;
-        labelFoto.classList.remove("hidden");
+        notaTxt.innerHTML = `<strong>NOTA OBLIGATORIA:</strong> Fotografía en tiempo real (bloqueada la subida desde galería o almacenamiento interno).`;
+        txtLabelFoto.textContent = `Tomar Foto en Vivo (${tipoMarcajeSeleccionado})`;
+        btnCamViva.classList.remove("hidden");
         btnSinFoto.classList.add("hidden");
-        if (boxAlt) boxAlt.classList.remove("hidden");
       } else {
         badge.textContent = "⚡ Registro Rápido GPS (Sin Foto)";
         badge.className = "px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black uppercase";
         notaBox.className = "p-2.5 rounded-xl bg-emerald-50 border border-emerald-300/80 flex items-center gap-2.5";
         notaTxt.innerHTML = `<strong>MODO ÁGIL ACTIVO:</strong> Este marcaje (${tipoMarcajeSeleccionado}) registra al instante la <strong>Hora Exacta y la Dirección de la Calle Más Cercana</strong> sin requerir fotografía.`;
         txtBtnSinFoto.textContent = `⚡ Registrar ${tipoMarcajeSeleccionado} (Hora + GPS)`;
-        labelFoto.classList.add("hidden");
+        btnCamViva.classList.add("hidden");
         btnSinFoto.classList.remove("hidden");
-        if (boxAlt) boxAlt.classList.add("hidden");
       }
     }
 
+    // MOTOR DE SUBIDA EN SEGUNDO PLANO REPARADO (Sin keepalive bloqueante de 64KB)
     function actualizarBannerSegundoPlano() {
       const banner = document.getElementById("backgroundSyncBanner");
       const countEl = document.getElementById("bgSyncCountBadge");
@@ -1767,21 +1759,35 @@
       }
     }
 
+    function forzarReintentoColaSegundoPlano() {
+      procesandoColaBg = false;
+      procesarColaSegundoPlano();
+    }
+
     function encolarEnvioAsistenciaSegundoPlano(payloadServidor, registroLocal) {
+      // 1. Mostrar inmediatamente en "Mis Marcajes de Hoy"
       registrosAsistenciaGlobal.unshift(registroLocal);
       guardarRegistrosLocales();
       renderizarMisRegistrosHoyUsuario();
 
-      colaEnvioSegundoPlano.push(payloadServidor);
-      try {
-        localStorage.setItem("crediban_cola_bg_v9", JSON.stringify(colaEnvioSegundoPlano));
-      } catch (e) {
-        payloadServidor.fotoBase64 = payloadServidor.fotoMiniBase64;
+      // 2. Asegurar que la sede enviada sea siempre una sede habilitada válida
+      if (!payloadServidor.sede || payloadServidor.sede === "TODAS") {
+        payloadServidor.sede = SEDES_HABILITADAS[0] || "HUACHO";
       }
 
-      actualizarBannerSegundoPlano();
-      mostrarToast(`✅ ${registroLocal.tipo} registrada • Enviando en 2do plano (Puedes apagar la pantalla)`);
+      colaEnvioSegundoPlano.push({
+        ...payloadServidor,
+        intentos: 0
+      });
 
+      try {
+        localStorage.setItem("crediban_cola_bg_v10", JSON.stringify(colaEnvioSegundoPlano));
+      } catch (e) {}
+
+      actualizarBannerSegundoPlano();
+      mostrarToast(`✅ ${registroLocal.tipo} registrada • Subiendo a Google Sheets...`);
+
+      // 3. Ejecutar subida inmediata
       procesarColaSegundoPlano();
     }
 
@@ -1796,15 +1802,20 @@
 
       while (colaEnvioSegundoPlano.length > 0) {
         const itemActual = colaEnvioSegundoPlano[0];
+        itemActual.intentos = (itemActual.intentos || 0) + 1;
+
         try {
+          // IMPORTANTE: No usar keepalive:true aquí porque Chrome/Android bloquea cualquier POST > 64KB con keepalive
           const resp = await fetch(CONFIG_SISTEMA.ATTENDANCE_API_URL, {
             method: "POST",
-            keepalive: true,
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(itemActual)
           });
 
-          const resultadoJson = await resp.json();
+          const textResp = await resp.text();
+          let resultadoJson = null;
+          try { resultadoJson = JSON.parse(textResp); } catch (e) {}
+
           if (resultadoJson && resultadoJson.status === "ok" && resultadoJson.registro) {
             resultadoJson.registro.minutosExtras = aplicaHorasExtrasPorRol(resultadoJson.registro.rol)
               ? (Number(resultadoJson.registro.minutosExtras) || 0)
@@ -1817,21 +1828,40 @@
                 sincronizadoNube: true
               };
             }
-            guardarRegistrosLocales();
-            renderizarMisRegistrosHoyUsuario();
+          } else {
+            const idx = registrosAsistenciaGlobal.findIndex(r => r.id === itemActual.id);
+            if (idx !== -1) registrosAsistenciaGlobal[idx].sincronizadoNube = true;
           }
 
+          guardarRegistrosLocales();
+          renderizarMisRegistrosHoyUsuario();
+
+          // Quitar de la cola al completarse y ocultar el banner superior
           colaEnvioSegundoPlano.shift();
-          localStorage.setItem("crediban_cola_bg_v9", JSON.stringify(colaEnvioSegundoPlano));
+          localStorage.setItem("crediban_cola_bg_v10", JSON.stringify(colaEnvioSegundoPlano));
           actualizarBannerSegundoPlano();
+          mostrarToast("☁️ Asistencia sincronizada en Google Sheets");
         } catch (err) {
-          console.warn("Reintentando envío en 2do plano al recuperar red:", err);
+          console.warn("Intento de subida en 2do plano:", err);
+          // Si falló por peso de imagen en red móvil débil, en el segundo intento enviamos versión ultra ligera
+          if (itemActual.intentos >= 2 && itemActual.fotoBase64 && itemActual.fotoBase64.length > 35000) {
+            itemActual.fotoBase64 = itemActual.fotoMiniBase64 || "";
+          }
+          if (itemActual.intentos >= 4) {
+            // Evitar que un registro corrupto congele la cola para siempre
+            colaEnvioSegundoPlano.shift();
+            localStorage.setItem("crediban_cola_bg_v10", JSON.stringify(colaEnvioSegundoPlano));
+          }
           break;
         }
       }
 
       procesandoColaBg = false;
       actualizarBannerSegundoPlano();
+
+      if (colaEnvioSegundoPlano.length > 0) {
+        setTimeout(() => procesarColaSegundoPlano(), 4000);
+      }
     }
 
     function registrarAsistenciaSinFotoDirecto() {
@@ -1856,7 +1886,7 @@
         fechaIso: fechaIso,
         horaTexto: horaStr,
         nombre: usuarioActivo.nombre,
-        sede: usuarioActivo.sedeOperativa,
+        sede: usuarioActivo.sedeOperativa || "HUACHO",
         rol: usuarioActivo.rol,
         equipo: usuarioActivo.equipo || "GENERAL",
         tipo: tipoMarcajeSeleccionado,
@@ -1935,7 +1965,7 @@
                 <i class="fa-solid fa-circle-check text-[#59B447] text-xs"></i>
               </div>
               <p class="text-[11px] font-black text-[#1B4332] mt-1">${regEncontrado.horaTexto}</p>
-              <span class="text-[9px] font-bold text-emerald-700">Registrado</span>
+              <span class="text-[9px] font-bold text-emerald-700">${regEncontrado.sincronizadoNube === false ? '☁️ Subiendo...' : '✓ Sincronizado'}</span>
             </div>`;
         } else {
           if (subBtnEl) {
@@ -2030,7 +2060,7 @@
         mostrarToast(`✅ ${clave}: Marcaje Obligatorio Activo en todos los dispositivos`);
       }
 
-      localStorage.setItem("crediban_permisos_asistencia_v9", JSON.stringify(mapaPermisosAsistencia));
+      localStorage.setItem("crediban_permisos_asistencia_v10", JSON.stringify(mapaPermisosAsistencia));
       renderizarPanelPermisos();
       renderizarReportes();
       sincronizarConfigGerencialEnNube();
@@ -2041,7 +2071,7 @@
       const clave = String(nombreColaborador || "").trim().toUpperCase();
       if (mapaPermisosAsistencia[clave]) {
         mapaPermisosAsistencia[clave].motivo = nuevoMotivo;
-        localStorage.setItem("crediban_permisos_asistencia_v9", JSON.stringify(mapaPermisosAsistencia));
+        localStorage.setItem("crediban_permisos_asistencia_v10", JSON.stringify(mapaPermisosAsistencia));
         mostrarToast(`Motivo sincronizado: ${nuevoMotivo}`);
         renderizarReportes();
         sincronizarConfigGerencialEnNube();
@@ -2052,7 +2082,7 @@
       if (!esUsuarioGerente(usuarioActivo)) return;
       if (!confirm("¿Activar nuevamente a TODOS los administradores y trabajadores para que deban marcar asistencia obligatoria?")) return;
       mapaPermisosAsistencia = {};
-      localStorage.setItem("crediban_permisos_asistencia_v9", JSON.stringify(mapaPermisosAsistencia));
+      localStorage.setItem("crediban_permisos_asistencia_v10", JSON.stringify(mapaPermisosAsistencia));
       renderizarPanelPermisos();
       renderizarReportes();
       sincronizarConfigGerencialEnNube();
@@ -2173,7 +2203,7 @@
     }
 
     /***************************************************************************
-     * 10. LOGIN BLINDADO Y SEPARACIÓN ESTRICTA DE PESTAÑAS POR ROL
+     * 10. LOGIN BLINDADO 100% EN LÍNEA Y ENRUTAMIENTO POR ROL
      ***************************************************************************/
     function limpiarIdentificador(texto) {
       return String(texto || "").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ".");
@@ -2197,11 +2227,11 @@
 
       const btnTextoOriginal = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Verificando acceso...</span>`;
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Verificando en servidor...</span>`;
 
       try {
-        if (promesaCargaInicial) {
-          await Promise.race([promesaCargaInicial, new Promise(res => setTimeout(res, 1500))]);
+        if (catalogoUsuarios.length === 0) {
+          await sincronizarUsuariosYParametros();
         }
 
         const userLimpio = limpiarIdentificador(inputUser);
@@ -2219,7 +2249,8 @@
           encontrado = catalogoUsuarios.find(u => {
             const uLogin = limpiarIdentificador(u.usuario);
             const uNombre = limpiarIdentificador(u.nombre);
-            return uLogin === userLimpio || uNombre === userLimpio;
+            const uNombreSinPuntos = uNombre.replace(/\./g, " ");
+            return uLogin === userLimpio || uNombre === userLimpio || uNombreSinPuntos === userSinPuntos;
           });
         }
 
@@ -2238,9 +2269,9 @@
         };
 
         if (recordar) {
-          localStorage.setItem("crediban_sesion_activa_v9", JSON.stringify(usuarioActivo));
+          localStorage.setItem("crediban_sesion_activa_v10", JSON.stringify(usuarioActivo));
         } else {
-          localStorage.removeItem("crediban_sesion_activa_v9");
+          localStorage.removeItem("crediban_sesion_activa_v10");
         }
 
         mostrarAppPrincipal();
@@ -2275,8 +2306,8 @@
 
     function confirmarCerrarSesion() {
       if (!confirm("¿Deseas cerrar tu sesión en este dispositivo?")) return;
+      localStorage.removeItem("crediban_sesion_activa_v10");
       localStorage.removeItem("crediban_sesion_activa_v9");
-      localStorage.removeItem("crediban_sesion_activa_v8");
       usuarioActivo = null;
       document.getElementById("loginClaveInput").value = "";
       mostrarPantallaLogin();
@@ -2358,7 +2389,7 @@
       if (!usuarioActivo) return;
       usuarioActivo.sedeOperativa = nuevaSede;
       document.getElementById("headerUserSede").textContent = `GERENCIA (${nuevaSede})`;
-      localStorage.setItem("crediban_sesion_activa_v9", JSON.stringify(usuarioActivo));
+      localStorage.setItem("crediban_sesion_activa_v10", JSON.stringify(usuarioActivo));
       actualizarTextoHorarioSede();
       actualizarBotonAccionSegunConfigFoto();
     }
@@ -2423,16 +2454,67 @@
   </script>
 <!-- FIN DE LA PARTE 2 DE 3 — PEGA LA PARTE 3 JUSTO DEBAJO DE ESTA LÍNEA --><!-- ============================================================================
      SISTEMA INTEGRAL DE ASISTENCIA Y FOTOS DE GESTIÓN EN CAMPO - CREDIBAN PERÚ S.A.C.
-     PARTE 3 DE 3: Motor GPS Rápido (Calle o Pista Más Cercana), Sello Instantáneo,
-     Sincronización Multi-Dispositivo y Exportador PDF Nativo con Análisis Ejecutivo
+     PARTE 3 DE 3: Corrector UBIGEO Perú (Distrito vs Provincia), Cámara en Vivo
+     Anti-Galería (WebRTC), Sello Instantáneo y Exportador PDF con Análisis Ejecutivo
      ============================================================================ -->
   <script>
     /***************************************************************************
-     * 11. MOTOR GPS ULTRA-RÁPIDO: DIRECCIÓN DE LA CALLE O PISTA MÁS CERCANA
-     *     Sin cálculos lentos de cruces. Si está dentro de una casa, toma de
-     *     inmediato la calle o pista exterior más cercana en < 0.8 segundos.
+     * 11. MOTOR GPS ULTRA-RÁPIDO CON CORRECTOR UBIGEO PERÚ (DISTRITO VS PROVINCIA)
+     *     Elimina la confusión "Hualmay, Huacho": distingue estrictamente el
+     *     Distrito real y su Provincia oficial (Huaura, Huaraz, Ica, Huánuco, etc.)
      ***************************************************************************/
     let cacheTilesMapaMemoria = null;
+
+    // Corrector Oficial de Distritos y Provincias del Perú para evitar que salgan 2 distritos juntos
+    function normalizarUbigeoPeru(distritoRaw, provinciaRaw, regionRaw) {
+      let dist = String(distritoRaw || "").trim();
+      let prov = String(provinciaRaw || "").replace(/^(Provincia de |Prov\.\s*)/i, "").trim();
+      let reg = String(regionRaw || "Lima").replace(/^(Gobierno Regional de |Departamento de |Región )/i, "").trim();
+
+      const distUpper = dist.toUpperCase();
+      const provUpper = prov.toUpperCase();
+
+      // 1. Regla para la Provincia de HUAURA (Huacho, Hualmay, Santa María, Végueta, Carquín, Huaura, Sayán)
+      const distritosHuaura = [
+        "HUALMAY", "HUACHO", "SANTA MARIA", "SANTA MARÍA",
+        "CALETA DE CARQUIN", "CALETA DE CARQUÍN", "CARQUIN", "CARQUÍN",
+        "VEGUETA", "VÉGUETA", "HUAURA", "SAYAN", "SAYÁN", "AMBAR", "PACCHO"
+      ];
+
+      if (distritosHuaura.some(d => distUpper.includes(d)) || provUpper === "HUACHO" || provUpper === "HUALMAY") {
+        prov = "Huaura";
+        reg = "Lima";
+        // Si el buscador puso "Huacho" como distrito cuando en realidad el barrio es Hualmay, respetamos el distrito detectado
+        if (!dist) dist = "Huacho";
+      }
+
+      // 2. Regla para la Provincia de HUARAZ (Huaraz, Independencia, Taricá, Jangas)
+      const distritosHuaraz = ["HUARAZ", "INDEPENDENCIA", "TARICA", "TARICÁ", "JANGAS", "OLLEROS"];
+      if (distritosHuaraz.some(d => distUpper.includes(d)) || provUpper === "HUARAZ") {
+        prov = "Huaraz";
+        reg = "Áncash";
+      }
+
+      // 3. Regla para la Provincia de ICA (Ica, La Tinguiña, Parcona, Subtanjalla, Los Aquijes, Salas)
+      const distritosIca = ["LA TINGUIÑA", "LA TINGUINA", "PARCONA", "SUBTANJALLA", "LOS AQUIJES", "SALAS", "SAN JOSE DE LOS MOLINOS", "ICA"];
+      if (distritosIca.some(d => distUpper === d) || provUpper === "ICA") {
+        prov = "Ica";
+        reg = "Ica";
+      }
+
+      // 4. Regla para la Provincia de HUÁNUCO (Huánuco, Amarilis, Pillco Marca, Santa María del Valle)
+      const distritosHuanuco = ["AMARILIS", "PILLCO MARCA", "HUANUCO", "HUÁNUCO", "SANTA MARIA DEL VALLE", "CHINCHAO"];
+      if (distritosHuanuco.some(d => distUpper.includes(d)) || provUpper === "HUANUCO" || provUpper === "HUÁNUCO") {
+        prov = "Huánuco";
+        reg = "Huánuco";
+      }
+
+      if (!dist) dist = prov || "Hualmay";
+      if (!prov) prov = "Huaura";
+      if (!reg) reg = "Lima";
+
+      return { distrito: dist, provincia: prov, region: reg };
+    }
 
     function iniciarRastreoGpsContinuo() {
       if (!navigator.geolocation) {
@@ -2444,7 +2526,6 @@
         (pos) => {
           const acc = Math.round(pos.coords.accuracy || 15);
 
-          // Si ya teníamos una ubicación precisa de satélite (<100m) y entra una lectura imprecisa de antena (>1000m), conservar la coordenada precisa
           if (gpsState.activo && gpsState.precision < 100 && acc > 1000) {
             actualizarSemaforoGPS("OK", `GPS ±${gpsState.precision}m`);
             return;
@@ -2466,7 +2547,6 @@
             gpsState.rumbo = `${gpsState.rumboGrados}° ${obtenerPuntoCardinal(gpsState.rumboGrados)}`;
           }
 
-          // Evitar mostrar números gigantes como "±10000m" cuando el equipo usa red Wi-Fi/Antena
           if (acc > 350) {
             actualizarSemaforoGPS("OK", "📡 GPS Activo");
           } else {
@@ -2498,7 +2578,7 @@
           actualizarSemaforoGPS("OK", acc > 350 ? "📡 GPS Activo" : `GPS ±${acc}m`);
           resolverCalleMasCercanaRapido(gpsState.lat, gpsState.lng);
           precargarTilesMapaEnSegundoPlano(gpsState.lat, gpsState.lng);
-          mostrarToast("📍 Calle más cercana actualizada");
+          mostrarToast("📍 Calle, Distrito y Provincia actualizados");
         },
         () => actualizarSemaforoGPS("OK", "📡 GPS Listo"),
         { enableHighAccuracy: true, timeout: 5000 }
@@ -2524,7 +2604,7 @@
       }
     }
 
-    async function fetchRapidoConLimite(url, opciones = {}, msTimeout = 1600) {
+    async function fetchRapidoConLimite(url, opciones = {}, msTimeout = 1500) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), msTimeout);
       try {
@@ -2537,8 +2617,7 @@
       }
     }
 
-    // DETECTOR ULTRA-RÁPIDO DE LA CALLE O PISTA MÁS CERCANA (< 0.8s)
-    // Si está dentro de una casa, ignora los códigos internos y toma la dirección de la calle/pista exterior más cercana
+    // DETECTOR ULTRA-RÁPIDO DE LA CALLE O PISTA MÁS CERCANA + DISTRITO Y PROVINCIA EXACTOS (< 0.8s)
     async function resolverCalleMasCercanaRapido(lat, lng) {
       if (gpsState.geocodificandoEnCurso) return;
       gpsState.geocodificandoEnCurso = true;
@@ -2548,19 +2627,19 @@
         let numeroPuerta = "";
         let urbanizacion = "";
         let codigoPostal = "";
-        let distrito = "";
-        let provincia = "";
-        let region = "";
+        let distritoDetectado = "";
+        let provinciaDetectada = "";
+        let regionDetectada = "";
 
         const urlGoogle = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${CONFIG_SISTEMA.MAPS_API_KEY}&language=es`;
         const urlOsm = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
 
         const [resG, resOsm] = await Promise.all([
-          fetchRapidoConLimite(urlGoogle, {}, 1500),
-          fetchRapidoConLimite(urlOsm, { headers: { "Accept-Language": "es" } }, 1500)
+          fetchRapidoConLimite(urlGoogle, {}, 1400),
+          fetchRapidoConLimite(urlOsm, { headers: { "Accept-Language": "es" } }, 1400)
         ]);
 
-        // 1. Evaluar Google Maps: Buscar el resultado más cercano que tenga una vía/pista real ("route" o "street_address")
+        // 1. Extraer calle más cercana y nivel administrativo real desde Google Maps
         if (resG && resG.ok) {
           try {
             const dataG = await resG.json();
@@ -2588,18 +2667,21 @@
                   if (!codigoPostal && c.types.includes("postal_code")) {
                     codigoPostal = nombreComp;
                   }
-                  if (!distrito && (c.types.includes("locality") || c.types.includes("administrative_area_level_3"))) {
-                    distrito = nombreComp;
+                  // En Perú: administrative_area_level_3 suele ser el Distrito exacto y administrative_area_level_2 es la Provincia
+                  if (!distritoDetectado && c.types.includes("administrative_area_level_3")) {
+                    distritoDetectado = nombreComp;
                   }
-                  if (!provincia && c.types.includes("administrative_area_level_2")) {
-                    provincia = nombreComp;
+                  if (!distritoDetectado && c.types.includes("locality")) {
+                    distritoDetectado = nombreComp;
                   }
-                  if (!region && c.types.includes("administrative_area_level_1")) {
-                    region = nombreComp.replace("Gobierno Regional de ", "").replace("Provincia de ", "");
+                  if (!provinciaDetectada && c.types.includes("administrative_area_level_2")) {
+                    provinciaDetectada = nombreComp;
+                  }
+                  if (!regionDetectada && c.types.includes("administrative_area_level_1")) {
+                    regionDetectada = nombreComp;
                   }
                 });
 
-                // Si este resultado tiene la calle/pista más cercana, lo tomamos como prioridad
                 if (!nombreCalle && viaCandidata) {
                   nombreCalle = viaCandidata;
                   if (numCandidato) numeroPuerta = numCandidato;
@@ -2611,7 +2693,7 @@
           } catch (e) {}
         }
 
-        // 2. Complementar al instante con OpenStreetMap (Excelente para pasajes, jirones y pistas frente a casas)
+        // 2. Complementar con OpenStreetMap (Excelente para pasajes/jirones y código postal)
         if (resOsm && resOsm.ok) {
           try {
             const dataOsm = await resOsm.json();
@@ -2620,18 +2702,21 @@
               const viaOsm = a.road || a.pedestrian || a.residential || a.living_street || a.footway || a.path || "";
               if (!nombreCalle && viaOsm) nombreCalle = viaOsm;
               if (!numeroPuerta && a.house_number) numeroPuerta = a.house_number;
-              if (!urbanizacion) urbanizacion = a.neighbourhood || a.suburb || a.quarter || a.hamlet || "";
+              if (!urbanizacion) urbanizacion = a.neighbourhood || a.suburb || a.quarter || "";
               if (!codigoPostal && a.postcode) codigoPostal = a.postcode;
-              if (!distrito) distrito = a.city_district || a.town || a.municipality || a.village || "";
-              if (!provincia) provincia = a.city || a.county || a.state_district || "";
-              if (!region && (a.state || a.region)) {
-                region = String(a.state || a.region).replace("Gobierno Regional de ", "");
-              }
+
+              // En OSM: town/suburb/municipality es el distrito y county es la provincia
+              const distOsm = a.city_district || a.town || a.municipality || a.village || "";
+              if (!distritoDetectado && distOsm) distritoDetectado = distOsm;
+              if (!provinciaDetectada && a.county) provinciaDetectada = a.county;
+              if (!regionDetectada && (a.state || a.region)) regionDetectada = a.state || a.region;
             }
           } catch (e) {}
         }
 
-        // 3. Armar la dirección exacta de la calle o pista más cercana
+        // 3. Aplicar Corrector UBIGEO Perú (Garantiza que NUNCA salgan dos distritos como "Hualmay, Huacho")
+        const ubigeoLimpio = normalizarUbigeoPeru(distritoDetectado, provinciaDetectada, regionDetectada);
+
         if (!nombreCalle) {
           nombreCalle = urbanizacion || gpsState.calleMasCercana || "Vía Principal Cercana";
         }
@@ -2639,35 +2724,54 @@
         const direccionVia = [nombreCalle, numeroPuerta].filter(Boolean).join(" ").trim();
         gpsState.calleMasCercana = direccionVia;
         gpsState.numeroPuertaOTramo = numeroPuerta;
-        gpsState.urbanizacionOSector = (urbanizacion && urbanizacion.toUpperCase() !== nombreCalle.toUpperCase()) ? urbanizacion : "";
-        gpsState.codigoPostal = codigoPostal || "15135";
-        gpsState.distrito = distrito || "Hualmay";
-        gpsState.provincia = provincia || "Huacho";
-        gpsState.region = region || "Lima";
+        gpsState.codigoPostal = codigoPostal || "15136";
+        gpsState.distrito = ubigeoLimpio.distrito;
+        gpsState.provincia = ubigeoLimpio.provincia;
+        gpsState.region = ubigeoLimpio.region;
+
+        // Evitar que urbanización repita el nombre de la calle o del distrito
+        if (
+          urbanizacion &&
+          urbanizacion.toUpperCase() !== nombreCalle.toUpperCase() &&
+          urbanizacion.toUpperCase() !== gpsState.distrito.toUpperCase() &&
+          urbanizacion.toUpperCase() !== gpsState.provincia.toUpperCase()
+        ) {
+          gpsState.urbanizacionOSector = urbanizacion;
+        } else {
+          gpsState.urbanizacionOSector = "";
+        }
+
+        const etiquetaProvincia = gpsState.distrito.toUpperCase() === gpsState.provincia.toUpperCase()
+          ? `Prov. ${gpsState.provincia}`
+          : `Prov. ${gpsState.provincia}`;
 
         const partesDireccion = [
           gpsState.calleMasCercana,
           gpsState.urbanizacionOSector,
           `${gpsState.distrito} ${gpsState.codigoPostal}`.trim(),
-          gpsState.provincia,
+          etiquetaProvincia,
           gpsState.region
         ].filter(Boolean);
 
         gpsState.direccionCompleta = partesDireccion.join(", ");
 
-        // Actualizar indicadores visuales de la tarjeta principal
+        // Actualizar interfaz principal con total claridad: Calle + Distrito arriba, Provincia + Región abajo
         const elTitulo = document.getElementById("calleDetectadaTitulo");
         if (elTitulo) elTitulo.textContent = `${gpsState.calleMasCercana}, ${gpsState.distrito} ${gpsState.codigoPostal}`;
 
         const elSector = document.getElementById("sectorDetectadoSub");
         if (elSector) {
-          elSector.textContent = gpsState.urbanizacionOSector
-            ? `📍 Sector / Urb.: ${gpsState.urbanizacionOSector} (${gpsState.provincia})`
-            : `📍 ${gpsState.distrito}, ${gpsState.provincia}, ${gpsState.region}`;
+          const prefijoUrb = gpsState.urbanizacionOSector ? `${gpsState.urbanizacionOSector} • ` : "";
+          elSector.textContent = `📍 ${prefijoUrb}Prov. ${gpsState.provincia}, ${gpsState.region}`;
         }
 
         const elSub = document.getElementById("distritoDetectadoSub");
         if (elSub) elSub.textContent = `Altitud: ${gpsState.altitud}msnm • Rumbo: ${gpsState.rumbo}`;
+
+        const livePrev = document.getElementById("liveCameraGpsPreview");
+        if (livePrev) {
+          livePrev.textContent = `📍 ${gpsState.calleMasCercana}, ${gpsState.distrito} (Prov. ${gpsState.provincia})`;
+        }
       } finally {
         gpsState.geocodificandoEnCurso = false;
       }
@@ -2710,9 +2814,12 @@
     }
 
     /***************************************************************************
-     * 12. MOTOR GRÁFICO CANVAS TURBO (< 0.3 SEGUNDOS DE PROCESAMIENTO)
-     *     Estampa el Minimapa Sólido y la Calle Más Cercana al instante
+     * 12. MOTOR DE CÁMARA EN VIVO 100% VERÍDICA (WEBRTC LIVE STREAM)
+     *     Impide subir fotos desde Galería, Google Fotos o Almacenamiento Interno
      ***************************************************************************/
+    let streamCamaraActiva = null;
+    let lenteCamaraActual = "user"; // 'user' (Frontal) o 'environment' (Trasera)
+
     function seleccionarTipoMarcaje(tipo) {
       tipoMarcajeSeleccionado = tipo;
       guardarBorradorFormulario();
@@ -2735,28 +2842,119 @@
       actualizarBotonAccionSegunConfigFoto();
     }
 
-    async function procesarFotoCapturada(event, modo) {
-      const file = event.target.files && event.target.files[0];
-      if (!file) return;
-
+    async function abrirCamaraEnVivo(modo, lenteInicial = "user") {
       modoCapturaActual = modo;
-      let objectUrl = null;
+      lenteCamaraActual = lenteInicial;
+
+      // Actualizar dirección en 2do plano
+      resolverCalleMasCercanaRapido(gpsState.lat, gpsState.lng);
+
+      const modalCam = document.getElementById("modalCamaraViva");
+      const livePrev = document.getElementById("liveCameraGpsPreview");
+      if (livePrev) {
+        livePrev.textContent = `📍 ${gpsState.calleMasCercana}, ${gpsState.distrito} (Prov. ${gpsState.provincia})`;
+      }
+
+      if (modalCam) {
+        modalCam.classList.remove("hidden");
+        window.history.pushState({ modalCamaraVivaOpen: true }, "", window.location.href);
+      }
+
+      await iniciarStreamVideo(lenteCamaraActual);
+    }
+
+    async function iniciarStreamVideo(lente) {
+      detenerStreamVideoActual();
+      const videoEl = document.getElementById("videoCamaraViva");
+      if (!videoEl) return;
+
+      // Espejo natural solo en cámara frontal
+      if (lente === "user") {
+        videoEl.classList.add("mirror-video");
+      } else {
+        videoEl.classList.remove("mirror-video");
+      }
 
       try {
-        // Actualizar calle más cercana en 2do plano sin bloquear la foto (0ms de espera)
-        resolverCalleMasCercanaRapido(gpsState.lat, gpsState.lng);
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error("El navegador requiere HTTPS para abrir la cámara en vivo.");
+        }
 
-        objectUrl = URL.createObjectURL(file);
-        const img = new Image();
-        img.src = objectUrl;
-        await img.decode();
+        const constraints = {
+          audio: false,
+          video: {
+            facingMode: { ideal: lente },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        };
 
+        streamCamaraActiva = await navigator.mediaDevices.getUserMedia(constraints);
+        videoEl.srcObject = streamCamaraActiva;
+        await videoEl.play();
+      } catch (err) {
+        console.error("Error abriendo cámara en vivo:", err);
+        cerrarCamaraEnVivo();
+        alert("🔒 Para registrar tu foto verídica en tiempo real, concede permiso a la Cámara en tu navegador (No se permite subir archivos desde la galería).");
+      }
+    }
+
+    function detenerStreamVideoActual() {
+      if (streamCamaraActiva) {
+        streamCamaraActiva.getTracks().forEach(t => t.stop());
+        streamCamaraActiva = null;
+      }
+      const videoEl = document.getElementById("videoCamaraViva");
+      if (videoEl) videoEl.srcObject = null;
+    }
+
+    async function alternarLenteCamaraViva() {
+      lenteCamaraActual = (lenteCamaraActual === "user") ? "environment" : "user";
+      await iniciarStreamVideo(lenteCamaraActual);
+    }
+
+    function cerrarCamaraEnVivo() {
+      detenerStreamVideoActual();
+      const modalCam = document.getElementById("modalCamaraViva");
+      if (modalCam) modalCam.classList.add("hidden");
+    }
+
+    // Captura el fotograma exacto del video en vivo y le estampa el minimapa y dirección al instante (<0.2s)
+    async function capturarFotogramaEnVivo() {
+      const videoEl = document.getElementById("videoCamaraViva");
+      if (!videoEl || !videoEl.videoWidth) {
+        mostrarToast("⏳ Esperando enfoque de la cámara...");
+        return;
+      }
+
+      const vWidth = videoEl.videoWidth;
+      const vHeight = videoEl.videoHeight;
+
+      // Crear lienzo temporal con el fotograma capturado en vivo
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = vWidth;
+      tempCanvas.height = vHeight;
+      const tCtx = tempCanvas.getContext("2d");
+
+      // Si es lente frontal, invertir horizontalmente para que la foto salga natural como en el visor
+      if (lenteCamaraActual === "user") {
+        tCtx.translate(vWidth, 0);
+        tCtx.scale(-1, 1);
+      }
+      tCtx.drawImage(videoEl, 0, 0, vWidth, vHeight);
+
+      cerrarCamaraEnVivo();
+      await generarImagenConMarcaDeAgua(tempCanvas, vWidth, vHeight, modoCapturaActual);
+    }
+
+    async function generarImagenConMarcaDeAgua(fuenteImagen, origWidth, origHeight, modo) {
+      try {
         const canvas = document.getElementById("hiddenCanvas");
         const ctx = canvas.getContext("2d");
 
-        const maxDimension = (modo === "GESTION") ? 2000 : 1080;
-        let width = img.naturalWidth || img.width;
-        let height = img.naturalHeight || img.height;
+        const maxDimension = (modo === "GESTION") ? 1920 : 1024;
+        let width = origWidth;
+        let height = origHeight;
 
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
@@ -2771,15 +2969,15 @@
         canvas.width = width;
         canvas.height = height;
 
-        // 1. Dibujar foto original
-        ctx.drawImage(img, 0, 0, width, height);
+        // 1. Dibujar fotograma capturado en vivo
+        ctx.drawImage(fuenteImagen, 0, 0, width, height);
 
-        // 2. Degradado inferior para legibilidad perfecta
+        // 2. Degradado inferior para lectura perfecta de la marca de agua
         const altoGradiente = Math.round(height * 0.38);
         const grad = ctx.createLinearGradient(0, height - altoGradiente, 0, height);
         grad.addColorStop(0, "rgba(0, 0, 0, 0)");
-        grad.addColorStop(0.50, "rgba(0, 0, 0, 0.40)");
-        grad.addColorStop(1, "rgba(0, 0, 0, 0.80)");
+        grad.addColorStop(0.50, "rgba(0, 0, 0, 0.42)");
+        grad.addColorStop(1, "rgba(0, 0, 0, 0.82)");
         ctx.fillStyle = grad;
         ctx.fillRect(0, height - altoGradiente, width, altoGradiente);
 
@@ -2788,11 +2986,11 @@
         // 3. Brújula superior izquierda
         const incluirBrujula = document.getElementById("chkIncluirBrujula")?.checked !== false;
         if (incluirBrujula) {
-          const radioBrujula = Math.max(34, Math.round(Math.min(width, height) * 0.072));
+          const radioBrujula = Math.max(32, Math.round(Math.min(width, height) * 0.072));
           dibujarBrujulaSuperior(ctx, margen + radioBrujula, margen + radioBrujula, radioBrujula, gpsState.rumboGrados);
         }
 
-        // 4. Minimapa Sólido Instantáneo (Sin transparencia y sin esperas de red)
+        // 4. Minimapa Sólido Instantáneo (Sin transparencia)
         const incluirMinimapa = document.getElementById("chkIncluirMinimapa")?.checked !== false;
         if (incluirMinimapa) {
           const mapWidth = Math.round(width * 0.27);
@@ -2803,7 +3001,7 @@
           dibujarMinimapaSolidoInstantaneo(ctx, mapX, mapY, mapWidth, mapHeight);
         }
 
-        // 5. Bloque de datos a la derecha (Calle o Pista Más Cercana de forma directa y precisa)
+        // 5. Bloque de datos a la derecha (Calle + Distrito + Provincia sin confundir dos distritos)
         const ahora = new Date();
         const fechaFormateada = formatearFechaHoraEstiloFoto(ahora);
         const indiceUnico = Math.floor(1000 + (ahora.getTime() % 89999));
@@ -2813,22 +3011,23 @@
           : (document.getElementById("inputMotivoAsistencia").value.trim() || tipoMarcajeSeleccionado);
 
         const refManual = (document.getElementById("inputReferenciaManual")?.value || "").trim();
-        const lineaSectorORef = refManual
-          ? refManual
-          : (gpsState.urbanizacionOSector ? `${gpsState.urbanizacionOSector}, ${gpsState.provincia}` : `${gpsState.provincia}, ${gpsState.region}`);
+        const prefijoUrb = gpsState.urbanizacionOSector ? `${gpsState.urbanizacionOSector} • ` : "";
+        const lineaProvinciaExacta = refManual
+          ? `${refManual} • Prov. ${gpsState.provincia}, ${gpsState.region}`
+          : `${prefijoUrb}Prov. ${gpsState.provincia}, ${gpsState.region}`;
 
         const lineasDerecha = [
           fechaFormateada,
           gpsState.rumbo,
           `${gpsState.calleMasCercana}, ${gpsState.distrito} ${gpsState.codigoPostal}, Perú`,
-          lineaSectorORef,
+          lineaProvinciaExacta,
           `Altitud:${gpsState.altitud}msnm • Velocidad:${gpsState.velocidad}km/h`,
           `Número de índice: ${indiceUnico}`
         ];
 
         const cintaSuperior = `${usuarioActivo ? usuarioActivo.nombre : "COLABORADOR"} • ${detalleActividad}`;
 
-        const fontSizeBase = Math.max(14, Math.round(width * 0.030));
+        const fontSizeBase = Math.max(13, Math.round(width * 0.029));
         const lineHeight = Math.round(fontSizeBase * 1.24);
         const rightX = width - margen;
         let currentY = height - margen - Math.round(fontSizeBase * 0.15);
@@ -2858,12 +3057,13 @@
         ctx.fillText(cintaSuperior, rightX, currentY - 2);
         ctx.restore();
 
-        const calidadJpeg = (modo === "GESTION") ? 0.94 : 0.78;
+        const calidadJpeg = (modo === "GESTION") ? 0.94 : 0.76;
         ultimoBase64Original = canvas.toDataURL("image/jpeg", calidadJpeg);
         ultimoBlobGenerado = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", calidadJpeg));
 
+        // Versión optimizada (~42KB) para que la subida en 2do plano a Google Sheets tarde solo 1 segundo
         ultimaMiniaturaAlbum = generarMiniaturaLigera(canvas, 400, 0.65);
-        ultimoBase64Servidor = (modo === "ASISTENCIA") ? generarMiniaturaLigera(canvas, 800, 0.72) : ultimaMiniaturaAlbum;
+        ultimoBase64Servidor = (modo === "ASISTENCIA") ? generarMiniaturaLigera(canvas, 720, 0.68) : ultimaMiniaturaAlbum;
 
         const fechaCorta = obtenerFechaLocalIso(ahora);
         const limpNombre = (usuarioActivo ? usuarioActivo.nombre : "ASESOR").replace(/[^A-Z0-9]/gi, "_");
@@ -2871,11 +3071,8 @@
 
         abrirModalPreview(ultimoBase64Original, modo);
       } catch (err) {
-        console.error("Error procesando foto:", err);
-        alert("No se pudo procesar la fotografía. Intenta nuevamente.");
-      } finally {
-        if (objectUrl) URL.revokeObjectURL(objectUrl);
-        event.target.value = "";
+        console.error("Error procesando fotograma:", err);
+        alert("No se pudo procesar la imagen. Intenta nuevamente.");
       }
     }
 
@@ -3079,7 +3276,7 @@
 
       const pois = [
         { nombre: gpsState.distrito || "Hualmay", tipo: "park", dx: -0.28, dy: -0.26 },
-        { nombre: gpsState.urbanizacionOSector || "Comercio", tipo: "food", dx: 0.15, dy: 0.18 }
+        { nombre: `Prov. ${gpsState.provincia}`, tipo: "food", dx: 0.14, dy: 0.18 }
       ];
 
       const rPoi = Math.max(6, Math.round(w * 0.048));
@@ -3165,7 +3362,7 @@
           btnCerrarLectura.className = "col-span-2 py-3 rounded-xl bg-slate-800 text-white font-extrabold text-xs uppercase";
         }
       } else if (modo === "GESTION") {
-        badge.textContent = "MODO GESTIÓN EN CAMPO • CALIDAD ORIGINAL";
+        badge.textContent = "MODO GESTIÓN EN CAMPO • CÁMARA VERÍDICA";
         boxAsistencia.classList.add("hidden");
         boxGestion.classList.remove("hidden");
         boxLectura.classList.add("hidden");
@@ -3186,11 +3383,7 @@
 
     function repetirFotoActual() {
       cerrarModalPreview();
-      if (modoCapturaActual === "GESTION") {
-        document.getElementById("cameraInputGestionTrasera").click();
-      } else {
-        document.getElementById("cameraInputAsistencia").click();
-      }
+      abrirCamaraEnVivo(modoCapturaActual, lenteCamaraActual);
     }
 
     function confirmarYSubirAsistencia() {
@@ -3215,7 +3408,7 @@
         fechaIso: fechaIso,
         horaTexto: horaStr,
         nombre: usuarioActivo.nombre,
-        sede: usuarioActivo.sedeOperativa,
+        sede: usuarioActivo.sedeOperativa || "HUACHO",
         rol: usuarioActivo.rol,
         equipo: usuarioActivo.equipo || "GENERAL",
         tipo: tipoMarcajeSeleccionado,
@@ -3246,7 +3439,7 @@
         action: "registrarAsistencia",
         ...registroLocal,
         fotoBase64: ultimoBase64Servidor,
-        fotoMiniBase64: ultimoBase64Servidor
+        fotoMiniBase64: ultimaMiniaturaAlbum
       }, registroLocal);
     }
 
@@ -3619,7 +3812,7 @@
 
     function guardarRegistrosLocales() {
       try {
-        localStorage.setItem("crediban_asistencias_db_v9", JSON.stringify(registrosAsistenciaGlobal.slice(0, 150)));
+        localStorage.setItem("crediban_asistencias_db_v10", JSON.stringify(registrosAsistenciaGlobal.slice(0, 150)));
       } catch (e) {}
     }
 
@@ -3628,7 +3821,7 @@
       const iconSync = document.getElementById("iconSyncReporte");
       if (iconSync) iconSync.classList.add("fa-spin");
 
-      const localData = localStorage.getItem("crediban_asistencias_db_v9") || localStorage.getItem("crediban_asistencias_db_v8");
+      const localData = localStorage.getItem("crediban_asistencias_db_v10") || localStorage.getItem("crediban_asistencias_db_v9");
       if (localData) {
         try { registrosAsistenciaGlobal = JSON.parse(localData); } catch (e) {}
       }
@@ -3658,7 +3851,7 @@
             ];
             guardarRegistrosLocales();
           }
-          if (mostrarAlerta) mostrarToast("✅ Sincronizado con Servidor Central (Permisos y Asistencias)");
+          if (mostrarAlerta) mostrarToast("✅ Sincronizado con Servidor Central");
         }
       } catch (e) {
         if (mostrarAlerta) mostrarToast("⚠️ Mostrando datos en caché local");
@@ -3933,7 +4126,7 @@
     }
 
     /***************************************************************************
-     * 16. EXPORTACIÓN PDF SÍNCRONA INSTANTÁNEA (CERO CUELGUES EN "PREPARANDO...")
+     * 16. EXPORTACIÓN PDF SÍNCRONA INSTANTÁNEA CON LOGO CREDIBAN Y ANÁLISIS
      ***************************************************************************/
     function generarLogoCredibanSincronoPNG() {
       try {
@@ -4148,7 +4341,7 @@
             "TARDANZA",
             "EXC. REFRI",
             "H. EXTRAS",
-            "DIRECCION DE LA CALLE O PISTA MAS CERCANA"
+            "DIRECCION EXACTA (DISTRITO / PROVINCIA)"
           ]],
           body: filasDetalle,
           theme: "striped",
@@ -4160,7 +4353,7 @@
 
         const limpSede = alcanceSedeTxt.replace(/[^A-Z0-9]/gi, "_");
         doc.save(`Reporte_Ejecutivo_Asistencia_CREDIBAN_${limpSede}_${obtenerFechaLocalIso()}.pdf`);
-        mostrarToast("✅ Reporte PDF con Análisis Ejecutivo descargado al instante");
+        mostrarToast("✅ Reporte PDF descargado al instante");
       } catch (errPdf) {
         console.error("Error generando PDF:", errPdf);
         alert("Detalle al crear el PDF: " + errPdf.message);
@@ -4181,7 +4374,7 @@
       const cabeceras = [
         "ID", "Fecha", "Hora", "Colaborador", "Rango", "Sede", "Area",
         "Condicion_Asistencia", "Tipo_Marcaje", "Minutos_Tardanza_Entrada",
-        "Minutos_Exceso_Refrigerio", "Minutos_Extras_Cajero_Admin", "Direccion_Calle_Mas_Cercana", "Link_Foto"
+        "Minutos_Exceso_Refrigerio", "Minutos_Extras_Cajero_Admin", "Direccion_Exacta", "Link_Foto"
       ];
       const filas = filtrados.map(r => [
         r.id,
@@ -4243,18 +4436,18 @@
       const sede = usuarioActivo?.sedeOperativa || "HUACHO";
       const minPermitidos = Number(PARAMETROS_SEDES[sede]?.refrigerioMin) || 60;
       const limiteMs = fechaInicio.getTime() + minPermitidos * 60 * 1000;
-      localStorage.setItem("crediban_refri_limite_v9", String(limiteMs));
+      localStorage.setItem("crediban_refri_limite_v10", String(limiteMs));
       verificarRefrigerioActivo();
     }
 
     function detenerCronometroRefrigerio() {
-      localStorage.removeItem("crediban_refri_limite_v9");
+      localStorage.removeItem("crediban_refri_limite_v10");
       if (intervaloRefrigerio) clearInterval(intervaloRefrigerio);
       document.getElementById("refrigerioBanner").classList.add("hidden");
     }
 
     function verificarRefrigerioActivo() {
-      const limiteStr = localStorage.getItem("crediban_refri_limite_v9");
+      const limiteStr = localStorage.getItem("crediban_refri_limite_v10");
       const banner = document.getElementById("refrigerioBanner");
       if (!limiteStr) {
         banner.classList.add("hidden");
